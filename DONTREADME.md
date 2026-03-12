@@ -1,0 +1,117 @@
+**Goal:**
+
+Benchmark Java 17 vs Java 21 vs Java 25 using:
+•	JMH for low-level JVM benchmarks
+•	Quarkus for realistic backend benchmarks
+•	wrk or k6 for load testing
+•	JFR + GC logs for JVM analysis
+•	Python for result aggregation and charting
+
+**Core question:**
+
+How much do modern Java LTS releases improve:
+•	startup time
+•	memory footprint
+•	throughput
+•	tail latency
+•	garbage collection behavior
+•	concurrency behavior
+•	Quarkus runtime efficiency
+
+
+---
+```
+java-lts-performance-lab/
+│
+├── README.md
+├── .gitignore
+├── docker-compose.yml
+├── Makefile
+├── runbook.md
+│
+├── docs/
+│   ├── methodology.md
+│   ├── benchmark-matrix.md
+│   ├── threats-to-validity.md
+│   ├── analysis-notes.md
+│   └── charts/
+│
+├── scripts/
+│   ├── setup-jdks.sh
+│   ├── run_jmh_all.sh
+│   ├── run_quarkus_all.sh
+│   ├── run_gc_suite.sh
+│   ├── collect_metrics.sh
+│   ├── parse_gc_logs.py
+│   ├── parse_jfr.py
+│   ├── aggregate_results.py
+│   └── generate_charts.py
+│
+├── infra/
+│   ├── postgres/
+│   │   └── init.sql
+│   └── k6/
+│       ├── products.js
+│       ├── transform.js
+│       ├── aggregate.js
+│       └── mixed-workload.js
+│
+├── results/
+│   ├── raw/
+│   │   ├── java17/
+│   │   ├── java21/
+│   │   └── java25/
+│   ├── processed/
+│   └── charts/
+│
+├── jmh-benchmarks/
+│   ├── pom.xml
+│   └── src/main/java/com/pedrolucas/benchmarks/
+│       ├── JsonBenchmarks.java
+│       ├── AllocationBenchmarks.java
+│       ├── CollectionBenchmarks.java
+│       ├── StringBenchmarks.java
+│       └── ConcurrencyBenchmarks.java
+│
+└── quarkus-app/
+├── pom.xml
+├── src/main/resources/
+│   ├── application.properties
+│   └── import.sql
+└── src/main/java/com/pedrolucas/lab/
+├── api/
+│   ├── HealthResource.java
+│   ├── ProductResource.java
+│   ├── TransformResource.java
+│   ├── AggregateResource.java
+│   └── OrderResource.java
+├── service/
+│   ├── ProductService.java
+│   ├── TransformService.java
+│   ├── AggregateService.java
+│   └── OrderService.java
+├── domain/
+│   ├── Product.java
+│   ├── Order.java
+│   └── Customer.java
+├── dto/
+│   ├── ProductDTO.java
+│   ├── TransformRequest.java
+│   ├── TransformResponse.java
+│   └── AggregateResponse.java
+└── repository/
+└── OrderRepository.java
+```
+
+---
+
+Best next move
+
+I suggest we do this in this order:
+1.	root repo structure
+2.	root pom.xml
+3.	jmh-benchmarks/pom.xml
+4.	quarkus-app/pom.xml
+5.	first endpoints and first JMH classes
+6.	benchmark scripts
+7.	README skeleton

@@ -1,0 +1,2 @@
+-- Initial database bootstrap for benchmark scenarios.
+-- Tables and seed data will be added in later commits.

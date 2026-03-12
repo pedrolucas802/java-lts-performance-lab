@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: java-lts-lab-postgres
+    environment:
+      POSTGRES_DB: benchmarkdb
+      POSTGRES_USER: benchmark
+      POSTGRES_PASSWORD: benchmark
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
