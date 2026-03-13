@@ -1,0 +1,3 @@
+java_version,scenario,http_reqs,reqs_per_sec,avg_ms,p90_ms,p95_ms,max_ms,failed_rate,source_file
+21,products,3783,188.602158,4.91,7.52,9.07,168.95,0.0,results/raw/java21/quarkus/products-summary.txt
+21,transform,3800,189.245893,4.26,6.94,7.76,26.41,0.0,results/raw/java21/quarkus/transform-summary.txt

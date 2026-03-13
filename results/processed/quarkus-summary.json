@@ -1,0 +1,26 @@
+[
+  {
+    "java_version": "21",
+    "scenario": "products",
+    "http_reqs": 3783,
+    "reqs_per_sec": 188.602158,
+    "avg_ms": 4.91,
+    "p90_ms": 7.52,
+    "p95_ms": 9.07,
+    "max_ms": 168.95,
+    "failed_rate": 0.0,
+    "source_file": "results/raw/java21/quarkus/products-summary.txt"
+  },
+  {
+    "java_version": "21",
+    "scenario": "transform",
+    "http_reqs": 3800,
+    "reqs_per_sec": 189.245893,
+    "avg_ms": 4.26,
+    "p90_ms": 6.94,
+    "p95_ms": 7.76,
+    "max_ms": 26.41,
+    "failed_rate": 0.0,
+    "source_file": "results/raw/java21/quarkus/transform-summary.txt"
+  }
+]

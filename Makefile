@@ -22,3 +22,6 @@ charts:
 
 clean:
 	find . -name target -type d -exec rm -rf {} +
+
+aggregate:
+	python3 scripts/aggregate_quarkus_results.py

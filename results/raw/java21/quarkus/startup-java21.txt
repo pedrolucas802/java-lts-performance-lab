@@ -1,0 +1,4 @@
+java_version=21
+startup_ms=175
+port=8080
+log_file=results/raw/java21/quarkus/startup-java21.log
