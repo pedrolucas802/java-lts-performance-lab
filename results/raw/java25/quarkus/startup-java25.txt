@@ -1,4 +1,4 @@
 java_version=25
-startup_ms=449
+startup_ms=10
 port=8080
 log_file=results/raw/java25/quarkus/startup-java25.log

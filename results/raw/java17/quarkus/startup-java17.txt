@@ -1,0 +1,4 @@
+java_version=17
+startup_ms=10
+port=8080
+log_file=results/raw/java17/quarkus/startup-java17.log
