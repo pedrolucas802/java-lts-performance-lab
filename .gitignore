@@ -34,3 +34,9 @@ results/raw/**/*.json
 
 # Env files
 .env
+
+# jmh files
+dependency-reduced-pom.xml
+jmh-benchmarks/target/
+quarkus-app/target/
+dependency-reduced-pom.xml

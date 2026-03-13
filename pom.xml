@@ -20,8 +20,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.parameters>true</maven.compiler.parameters>
 
-        <!-- Default Java release for local development.
-             Override with -Djava.release=17 / 21 / 25 -->
+        <!-- Default Java release for local development. Override with -Djava.release=17 / 21 / 25 -->
         <java.release>21</java.release>
 
         <!-- Plugin versions -->
