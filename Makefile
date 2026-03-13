@@ -1,5 +1,7 @@
 .PHONY: help jmh quarkus gc charts clean
 
+JAVA_VERSION ?= 21
+
 help:
 	@echo "Available targets:"
 	@echo "  make jmh"
@@ -9,10 +11,11 @@ help:
 	@echo "  make clean"
 
 jmh:
-	@echo "JMH benchmark runner not implemented yet."
+	mvn -pl jmh-benchmarks clean package -Djava.release=$(JAVA_VERSION)
+	java -jar jmh-benchmarks/target/jmh-benchmarks.jar -rf json -rff results/raw/java$(JAVA_VERSION)/jmh/json-serialization-baseline.json
 
 quarkus:
-	@echo "Quarkus benchmark runner not implemented yet."
+	./scripts/run_quarkus_startup_benchmark.sh $(JAVA_VERSION)
 
 gc:
 	@echo "GC benchmark suite not implemented yet."

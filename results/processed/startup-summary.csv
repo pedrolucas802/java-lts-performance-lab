@@ -1,0 +1,4 @@
+java_version,startup_ms,port,log_file,source_file
+17,10,8080,results/raw/java17/quarkus/startup-java17.log,results/raw/java17/quarkus/startup-java17.txt
+21,13,8080,results/raw/java21/quarkus/startup-java21.log,results/raw/java21/quarkus/startup-java21.txt
+25,10,8080,results/raw/java25/quarkus/startup-java25.log,results/raw/java25/quarkus/startup-java25.txt

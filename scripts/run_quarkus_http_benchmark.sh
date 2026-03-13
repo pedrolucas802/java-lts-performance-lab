@@ -21,6 +21,7 @@ if ! command -v k6 >/dev/null 2>&1; then
   exit 1
 fi
 
+echo "Expecting Quarkus app to be running with Java ${JAVA_VERSION} and built with -Djava.release=${JAVA_VERSION}."
 echo "Running HTTP benchmark for scenario: ${SCENARIO}"
 echo "Results dir: ${RESULTS_DIR}"
 

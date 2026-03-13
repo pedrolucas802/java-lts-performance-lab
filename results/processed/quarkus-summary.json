@@ -1,5 +1,29 @@
 [
   {
+    "java_version": "17",
+    "scenario": "products",
+    "http_reqs": 3780,
+    "reqs_per_sec": 188.416643,
+    "avg_ms": 5.03,
+    "p90_ms": 7.62,
+    "p95_ms": 8.96,
+    "max_ms": 159.41,
+    "failed_rate": 0.0,
+    "source_file": "results/raw/java17/quarkus/products-summary.txt"
+  },
+  {
+    "java_version": "17",
+    "scenario": "transform",
+    "http_reqs": 3821,
+    "reqs_per_sec": 190.060025,
+    "avg_ms": 3.88,
+    "p90_ms": 6.57,
+    "p95_ms": 7.58,
+    "max_ms": 26.29,
+    "failed_rate": 0.0,
+    "source_file": "results/raw/java17/quarkus/transform-summary.txt"
+  },
+  {
     "java_version": "21",
     "scenario": "products",
     "http_reqs": 3783,
@@ -22,5 +46,29 @@
     "max_ms": 26.41,
     "failed_rate": 0.0,
     "source_file": "results/raw/java21/quarkus/transform-summary.txt"
+  },
+  {
+    "java_version": "25",
+    "scenario": "products",
+    "http_reqs": 3786,
+    "reqs_per_sec": 188.335412,
+    "avg_ms": 4.81,
+    "p90_ms": 8.09,
+    "p95_ms": 9.33,
+    "max_ms": 175.6,
+    "failed_rate": 0.0,
+    "source_file": "results/raw/java25/quarkus/products-summary.txt"
+  },
+  {
+    "java_version": "25",
+    "scenario": "transform",
+    "http_reqs": 3800,
+    "reqs_per_sec": 189.239852,
+    "avg_ms": 4.4,
+    "p90_ms": 7.16,
+    "p95_ms": 7.98,
+    "max_ms": 35.5,
+    "failed_rate": 0.0,
+    "source_file": "results/raw/java25/quarkus/transform-summary.txt"
   }
 ]

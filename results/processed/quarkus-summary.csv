@@ -1,3 +1,7 @@
 java_version,scenario,http_reqs,reqs_per_sec,avg_ms,p90_ms,p95_ms,max_ms,failed_rate,source_file
+17,products,3780,188.416643,5.03,7.62,8.96,159.41,0.0,results/raw/java17/quarkus/products-summary.txt
+17,transform,3821,190.060025,3.88,6.57,7.58,26.29,0.0,results/raw/java17/quarkus/transform-summary.txt
 21,products,3783,188.602158,4.91,7.52,9.07,168.95,0.0,results/raw/java21/quarkus/products-summary.txt
 21,transform,3800,189.245893,4.26,6.94,7.76,26.41,0.0,results/raw/java21/quarkus/transform-summary.txt
+25,products,3786,188.335412,4.81,8.09,9.33,175.6,0.0,results/raw/java25/quarkus/products-summary.txt
+25,transform,3800,189.239852,4.4,7.16,7.98,35.5,0.0,results/raw/java25/quarkus/transform-summary.txt

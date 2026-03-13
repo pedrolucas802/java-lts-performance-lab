@@ -10,7 +10,7 @@ MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-60}"
 mkdir -p "${RESULTS_DIR}/java${JAVA_VERSION}/quarkus"
 
 echo "Building Quarkus app for Java ${JAVA_VERSION}..."
-mvn -q -pl "${APP_DIR}" clean package -DskipTests
+mvn -q -pl "${APP_DIR}" clean package -DskipTests -Djava.release="${JAVA_VERSION}"
 
 JAR_PATH=$(find "${APP_DIR}/target/quarkus-app" -name "quarkus-run.jar" | head -n 1)
 

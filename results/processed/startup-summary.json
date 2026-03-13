@@ -1,0 +1,23 @@
+[
+  {
+    "java_version": "17",
+    "startup_ms": 10,
+    "port": 8080,
+    "log_file": "results/raw/java17/quarkus/startup-java17.log",
+    "source_file": "results/raw/java17/quarkus/startup-java17.txt"
+  },
+  {
+    "java_version": "21",
+    "startup_ms": 13,
+    "port": 8080,
+    "log_file": "results/raw/java21/quarkus/startup-java21.log",
+    "source_file": "results/raw/java21/quarkus/startup-java21.txt"
+  },
+  {
+    "java_version": "25",
+    "startup_ms": 10,
+    "port": 8080,
+    "log_file": "results/raw/java25/quarkus/startup-java25.log",
+    "source_file": "results/raw/java25/quarkus/startup-java25.txt"
+  }
+]

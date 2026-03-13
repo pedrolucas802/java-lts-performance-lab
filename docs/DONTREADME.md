@@ -115,3 +115,13 @@ I suggest we do this in this order:
 5.	first endpoints and first JMH classes
 6.	benchmark scripts
 7.	README skeleton
+
+
+
+--- 
+
+**Conclusion**
+
+In this first steady-state Quarkus benchmark on Apple Silicon, Java 25 did not produce a large throughput advantage over Java 21 or Java 17. The three LTS versions performed very similarly under moderate HTTP load, suggesting that the practical gains of upgrading may be more visible in startup, warmup, GC behavior, memory footprint, and newer runtime capabilities than in simple steady-state request throughput alone.
+
+Initial Quarkus HTTP benchmarks on an Apple Silicon M4 Pro showed near-identical steady-state throughput across Java 17, 21, and 25 for lightweight REST workloads. In this setup, Java 25 did not significantly outperform earlier LTS releases in requests/sec, indicating that upgrade benefits may be more visible in startup behavior, memory efficiency, observability, and newer runtime features rather than raw steady-state HTTP throughput alone.
