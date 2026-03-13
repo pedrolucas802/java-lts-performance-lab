@@ -58,38 +58,8 @@ The experiments are organized into **five benchmark tracks**, each targeting spe
 For the full experimental design and measurement methodology, see:
 
 **[`docs/benchmark-matrix.md`](docs/benchmark-matrix.md)**
-
----
-
-# Benchmark Stack
-
-The project uses multiple complementary benchmarking approaches:
-
-### JVM microbenchmarks
-
-- **JMH**
-- isolates JVM behavior from framework overhead
-
-### Application benchmarks
-
-- **Quarkus REST application**
-- realistic backend request workloads
-
-### Load testing
-
-- **k6**
-- controlled HTTP load scenarios
-
-### JVM analysis
-
-- **JFR recordings**
-- **GC logs**
-- allocation and memory profiling
-
-### Result processing
-
-- **Python scripts**
-- automatic aggregation and chart generation
+**[`docs/benchmark-stack.md`](docs/benchmark-stack.md)**
+**[`docs/methodology.md`](docs/methodology.md)**
 
 ---
 
@@ -160,9 +130,3 @@ Next work focuses on:
 - GC log analysis
 - JFR runtime profiling
 - containerized benchmarks
-
----
-
-# License
-
-MIT
