@@ -57,7 +57,7 @@ The experiments are organized into **five benchmark tracks**, each targeting spe
 
 For the full experimental design and measurement methodology, see:
 
-**[`docs/methodology.md`](docs/methodology.md)**
+**[`docs/benchmark-matrix.md`](docs/benchmark-matrix.md)**
 
 ---
 
@@ -123,41 +123,6 @@ java-lts-performance-lab
 
 ---
 
-# Current Implemented Benchmarks
-
-### JMH
-
-Raw JVM microbenchmarks currently include:
-
-- JSON serialization
-- allocation behavior
-- collections and string operations
-
-### Quarkus Application Benchmarks
-
-Endpoints used for testing:
-
-| Endpoint | Purpose |
-|------|------|
-| `/health` | readiness checks |
-| `/products` | JSON serialization workload |
-| `/transform` | allocation-heavy request/response |
-| `/aggregate` | concurrency and fan-out workload |
-
-### Load Testing
-
-HTTP workloads generated using:
-
-- **k6**
-
-Scenarios include:
-
-- products workload
-- transform workload
-- concurrency aggregation workload
-
----
-
 # Initial Observations
 
 Early steady-state Quarkus HTTP benchmarks on **Apple Silicon (M4 Pro)** show **very similar throughput across Java 17, Java 21, and Java 25** for lightweight REST workloads.
@@ -174,19 +139,6 @@ This suggests that the practical gains of newer Java versions may be more visibl
 - runtime observability
 
 rather than simple steady-state HTTP throughput alone.
-
----
-
-# Hardware Used
-
-Initial tests are running on:
-
-- **MacBook Pro**
-- **Apple Silicon M4 Pro**
-- **48GB RAM**
-- macOS ARM64
-
-Future runs may include containerized environments to evaluate JVM container awareness.
 
 ---
 
@@ -208,14 +160,6 @@ Next work focuses on:
 - GC log analysis
 - JFR runtime profiling
 - containerized benchmarks
-
----
-
-# Philosophy
-
-This project aims to provide **measured JVM behavior** rather than assuming improvements between Java releases.
-
-Some experiments may show **minimal differences between versions**, which is itself a valuable engineering insight.
 
 ---
 
