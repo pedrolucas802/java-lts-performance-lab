@@ -2,10 +2,10 @@ java_version,scenario,http_reqs,reqs_per_sec,avg_ms,p90_ms,p95_ms,max_ms,failed_
 17,aggregate-platform,10528,523.801551,44.92,47.71,48.91,61.22,0.0,results/raw/java17/quarkus/aggregate-platform-summary.txt
 17,products,3900,194.131775,2.21,3.9,4.74,9.07,0.0,results/raw/java17/quarkus/products-summary.txt
 17,transform,3880,193.764712,1.93,2.6,2.96,6.52,0.0,results/raw/java17/quarkus/transform-summary.txt
-21,aggregate-platform,5257,522.591054,45.0,48.09,49.5,56.05,0.0,results/raw/java21/quarkus/aggregate-platform-summary.txt
-21,aggregate-virtual,5207,517.437248,45.23,47.53,48.17,51.0,0.0,results/raw/java21/quarkus/aggregate-virtual-summary.txt
-21,products,1900,188.474431,5.08,9.15,9.95,34.67,0.0,results/raw/java21/quarkus/products-summary.txt
-21,transform,1920,190.337856,3.79,5.91,7.14,23.73,0.0,results/raw/java21/quarkus/transform-summary.txt
+21,aggregate-platform,5265,521.516648,44.93,48.15,49.35,56.38,0.0,results/raw/java21/quarkus/aggregate-platform-summary.txt
+21,aggregate-virtual,5300,527.260827,43.73,45.72,46.89,57.06,0.0,results/raw/java21/quarkus/aggregate-virtual-summary.txt
+21,products,1900,188.371061,5.03,8.91,10.15,32.22,0.0,results/raw/java21/quarkus/products-summary.txt
+21,transform,1920,191.818923,2.98,5.12,5.75,24.56,0.0,results/raw/java21/quarkus/transform-summary.txt
 25,aggregate-platform,10100,502.525939,48.55,52.62,54.4,143.66,0.0,results/raw/java25/quarkus/aggregate-platform-summary.txt
 25,aggregate-virtual,18750,937.150302,1.54,3.18,3.76,9.13,0.0,results/raw/java25/quarkus/aggregate-virtual-summary.txt
 25,products,3860,192.578129,2.47,3.78,4.58,7.73,0.0,results/raw/java25/quarkus/products-summary.txt

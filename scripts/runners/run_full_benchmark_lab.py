@@ -13,12 +13,28 @@ from pathlib import Path
 from shutil import which
 from typing import Iterable, TextIO
 
+from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskID,
+    TextColumn,
+    TimeElapsedColumn,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RUNNERS_DIR = PROJECT_ROOT / "scripts" / "runners"
 AGGREGATORS_DIR = PROJECT_ROOT / "scripts" / "aggregators"
 CHARTS_DIR = PROJECT_ROOT / "scripts" / "charts"
 LOGS_DIR = PROJECT_ROOT / "results" / "logs"
+
+RICH_CONSOLE = Console()
+
+RUN_LOGGER: "RunLogger | None" = None
+RUN_TIMESTAMP: str | None = None
+LIVE_PROGRESS_ACTIVE = False
 
 
 class RunLogger:
@@ -44,16 +60,8 @@ class RunLogger:
         self.write_line(separator)
 
 
-RUN_LOGGER: RunLogger | None = None
-RUN_TIMESTAMP: str | None = None
-
-
 def timestamp_now() -> str:
     return datetime.now().strftime("%Y%m%d-%H%M%S")
-
-
-def console(message: str) -> None:
-    print(message, flush=True)
 
 
 def log_line(message: str) -> None:
@@ -61,28 +69,40 @@ def log_line(message: str) -> None:
         RUN_LOGGER.write_line(message)
 
 
-def info(message: str) -> None:
+def console(message: str, *, force: bool = False) -> None:
+    if force or not LIVE_PROGRESS_ACTIVE:
+        RICH_CONSOLE.print(message)
+
+
+def info(message: str, *, force_console: bool = False) -> None:
     line = f"[INFO] {message}"
-    console(line)
+    console(line, force=force_console)
     log_line(line)
 
 
-def success(message: str) -> None:
+def success(message: str, *, force_console: bool = False) -> None:
     line = f"[OK]   {message}"
-    console(line)
+    console(line, force=force_console)
     log_line(line)
 
 
-def error(message: str) -> None:
+def error(message: str, *, force_console: bool = False) -> None:
     line = f"[ERR]  {message}"
-    console(line)
+    console(line, force=force_console)
     log_line(line)
 
 
-def note(message: str) -> None:
+def note(message: str, *, force_console: bool = False) -> None:
     line = f"[NOTE] {message}"
-    console(line)
+    console(line, force=force_console)
     log_line(line)
+
+
+def sanitize_message(message: str, limit: int = 72) -> str:
+    clean = " ".join(message.split())
+    if len(clean) > limit:
+        return clean[: limit - 3] + "..."
+    return clean
 
 
 def macos_java_home(version: str) -> str:
@@ -105,14 +125,6 @@ def build_env(java_version: str) -> dict[str, str]:
     env["JAVA_HOME"] = java_home
     env["PATH"] = f"{java_home}/bin:{env.get('PATH', '')}"
     return env
-
-
-def print_progress(current: int, total: int, label: str) -> None:
-    width = 30
-    filled = int(width * current / total) if total else width
-    bar = "#" * filled + "-" * (width - filled)
-    percent = (current / total * 100.0) if total else 100.0
-    console(f"[{bar}] {current}/{total} ({percent:5.1f}%)  {label}")
 
 
 def summarize_output(text: str, *, max_lines: int = 8) -> list[str]:
@@ -147,6 +159,40 @@ def summarize_output(text: str, *, max_lines: int = 8) -> list[str]:
     return selected
 
 
+def set_progress_message(
+        progress: Progress | None,
+        task_id: TaskID | None,
+        completed: int,
+        total: int,
+        message: str,
+) -> None:
+    if progress is None or task_id is None:
+        return
+    progress.update(
+        task_id,
+        completed=completed,
+        total=total,
+        description=sanitize_message(message),
+    )
+
+
+def advance_progress(
+        progress: Progress | None,
+        task_id: TaskID | None,
+        completed: int,
+        total: int,
+        message: str,
+) -> None:
+    if progress is None or task_id is None:
+        return
+    progress.update(
+        task_id,
+        completed=completed,
+        total=total,
+        description=sanitize_message(message),
+    )
+
+
 def run_command(
         cmd: list[str],
         *,
@@ -154,13 +200,24 @@ def run_command(
         cwd: Path | None = None,
         check: bool = True,
         label: str | None = None,
+        progress: Progress | None = None,
+        task_id: TaskID | None = None,
+        completed_tasks: int = 0,
+        total_tasks: int = 0,
 ) -> subprocess.CompletedProcess[str]:
     command_str = " ".join(cmd)
+
+    if label:
+        set_progress_message(progress, task_id, completed_tasks, total_tasks, label)
+
     info(f"Running: {command_str}")
+
     if label:
         note(label)
 
     started = time.time()
+    started_at = datetime.now().isoformat()
+
     result = subprocess.run(
         cmd,
         cwd=str(cwd or PROJECT_ROOT),
@@ -173,6 +230,7 @@ def run_command(
 
     if RUN_LOGGER is not None:
         RUN_LOGGER.section(f"COMMAND: {command_str}")
+        RUN_LOGGER.write_line(f"Started at: {started_at}")
         RUN_LOGGER.write_line(f"Finished at: {datetime.now().isoformat()}")
         RUN_LOGGER.write_line(f"Duration seconds: {duration:.2f}")
         RUN_LOGGER.write_line(f"Return code: {result.returncode}")
@@ -192,6 +250,7 @@ def run_command(
 
     if check and result.returncode != 0:
         raise RuntimeError(f"Command failed ({result.returncode}): {command_str}")
+
     return result
 
 
@@ -215,8 +274,17 @@ def find_quarkus_jar() -> Path:
     return jar
 
 
-def start_quarkus_app(java_version: str, port: int) -> tuple[subprocess.Popen[str], TextIO, Path]:
+def start_quarkus_app(
+        java_version: str,
+        port: int,
+        *,
+        progress: Progress | None = None,
+        task_id: TaskID | None = None,
+        completed_tasks: int = 0,
+        total_tasks: int = 0,
+) -> tuple[subprocess.Popen[str], TextIO, Path]:
     env = build_env(java_version)
+
     run_command(
         [
             "mvn",
@@ -229,6 +297,10 @@ def start_quarkus_app(java_version: str, port: int) -> tuple[subprocess.Popen[st
         ],
         env=env,
         label=f"Building Quarkus app for Java {java_version}",
+        progress=progress,
+        task_id=task_id,
+        completed_tasks=completed_tasks,
+        total_tasks=total_tasks,
     )
 
     log_dir = PROJECT_ROOT / "results" / "raw" / f"java{java_version}" / "quarkus"
@@ -237,7 +309,17 @@ def start_quarkus_app(java_version: str, port: int) -> tuple[subprocess.Popen[st
     log_file = log_dir / f"app-run-java{java_version}-{run_suffix}.log"
 
     jar = find_quarkus_jar()
+
+    set_progress_message(
+        progress,
+        task_id,
+        completed_tasks,
+        total_tasks,
+        f"Starting Quarkus app for Java {java_version} on port {port}",
+    )
+
     info(f"Starting Quarkus app for Java {java_version} on port {port}")
+
     log_handle = log_file.open("w", encoding="utf-8")
     process = subprocess.Popen(
         ["java", f"-Dquarkus.http.port={port}", "-jar", str(jar)],
@@ -247,14 +329,17 @@ def start_quarkus_app(java_version: str, port: int) -> tuple[subprocess.Popen[st
         stderr=subprocess.STDOUT,
         text=True,
     )
+
     try:
         wait_for_health(port)
     except Exception:
         process.terminate()
         log_handle.close()
         raise
+
     success(f"Quarkus app is healthy for Java {java_version}")
     note(f"Application log: {log_file}")
+
     return process, log_handle, log_file
 
 
@@ -266,6 +351,7 @@ def stop_process(process: subprocess.Popen[str], log_handle: TextIO | None = Non
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait(timeout=5)
+
     if log_handle is not None and not log_handle.closed:
         log_handle.flush()
         log_handle.close()
@@ -276,9 +362,11 @@ def validate_tools() -> None:
     missing = [tool for tool in required if which(tool) is None]
     if missing:
         raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
+
     if sys.platform != "darwin":
-        error("This master script currently assumes macOS because it uses /usr/libexec/java_home.")
-        raise RuntimeError("Unsupported platform for this script")
+        raise RuntimeError(
+            "This script currently assumes macOS because it uses /usr/libexec/java_home."
+        )
 
 
 def scenarios_for_version(java_version: str) -> tuple[list[str], list[str]]:
@@ -301,6 +389,7 @@ def task_plan(versions: Iterable[str], include_gc: bool) -> list[str]:
         tasks.append(f"Memory suite Java {version}")
         if include_gc:
             tasks.append(f"GC suite Java {version}")
+
     tasks.extend(
         [
             "Aggregate startup results",
@@ -326,7 +415,7 @@ def create_run_logger() -> tuple[RunLogger, str, Path]:
 
 
 def main() -> int:
-    global RUN_LOGGER, RUN_TIMESTAMP
+    global RUN_LOGGER, RUN_TIMESTAMP, LIVE_PROGRESS_ACTIVE
 
     parser = argparse.ArgumentParser(
         description="Run the full Java LTS benchmark lab end-to-end."
@@ -358,13 +447,13 @@ def main() -> int:
         "--port",
         type=int,
         default=8080,
-        help="Port to use for startup and HTTP benchmark app. Default: 8080",
+        help="Port for startup and HTTP benchmarks. Default: 8080",
     )
     parser.add_argument(
         "--memory-port",
         type=int,
         default=8081,
-        help="Port to use for memory benchmark app. Default: 8081",
+        help="Port for memory benchmarks. Default: 8081",
     )
     parser.add_argument(
         "--heap-info",
@@ -383,7 +472,7 @@ def main() -> int:
     RUN_TIMESTAMP = run_timestamp
 
     try:
-        info(f"Run log file: {log_path}")
+        info(f"Run log file: {log_path}", force_console=True)
         validate_tools()
 
         versions = [str(v) for v in args.versions]
@@ -392,141 +481,238 @@ def main() -> int:
                 raise RuntimeError(f"Unsupported Java version: {version}")
 
         all_tasks = task_plan(versions, args.with_gc_suite)
-        completed = 0
-
-        def step(label: str) -> None:
-            nonlocal completed
-            completed += 1
-            print_progress(completed, len(all_tasks), label)
+        total_tasks = len(all_tasks)
+        completed_tasks = 0
 
         logger.section("RUN CONFIGURATION")
         logger.write_line(f"Versions: {', '.join(versions)}")
         logger.write_line(f"Startup repetitions: {args.startup_repetitions}")
         logger.write_line(f"HTTP duration: {args.http_duration}")
         logger.write_line(f"HTTP VUs: {args.http_vus}")
-        logger.write_line(f"Startup/HTTP port: {args.port}")
-        logger.write_line(f"Memory port: {args.memory_port}")
+        logger.write_line(f"Port: {args.port}")
+        logger.write_line(f"Memory port: {args.memory-port if False else args.memory_port}")
         logger.write_line(f"Heap info: {args.heap_info}")
         logger.write_line(f"With GC suite: {args.with_gc_suite}")
         logger.write_line()
 
-        note(f"Planned tasks: {len(all_tasks)}")
+        note(f"Planned tasks: {total_tasks}", force_console=True)
 
-        for version in versions:
-            env = build_env(version)
-            http_scenarios, memory_scenarios = scenarios_for_version(version)
-            note(f"Preparing benchmark flow for Java {version}")
+        with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(bar_width=32),
+                TextColumn("{task.completed}/{task.total}"),
+                TextColumn("({task.percentage:>5.1f}%)"),
+                TimeElapsedColumn(),
+                console=RICH_CONSOLE,
+                transient=False,
+        ) as progress:
+            LIVE_PROGRESS_ACTIVE = True
 
-            run_command(
-                ["bash", str(RUNNERS_DIR / "run_jmh_suite.sh"), version],
-                env=env,
-                label=f"JMH microbenchmarks for Java {version}",
+            task_id = progress.add_task(
+                description="Initializing benchmark lab",
+                total=total_tasks,
+                completed=0,
             )
-            step(f"JMH Java {version}")
 
-            startup_env = {**env, "PORT": str(args.port)}
-            run_command(
-                [
-                    "bash",
-                    str(RUNNERS_DIR / "run_quarkus_startup_benchmark.sh"),
-                    version,
-                    str(args.startup_repetitions),
-                ],
-                env=startup_env,
-                label=f"Startup benchmark for Java {version} on port {args.port}",
-            )
-            step(f"Startup Java {version}")
+            def step(task_label: str) -> None:
+                nonlocal completed_tasks
+                completed_tasks += 1
+                advance_progress(
+                    progress,
+                    task_id,
+                    completed_tasks,
+                    total_tasks,
+                    task_label,
+                )
 
-            process: subprocess.Popen[str] | None = None
-            app_log_handle: TextIO | None = None
-            try:
-                process, app_log_handle, _ = start_quarkus_app(version, args.port)
+            for version in versions:
+                env = build_env(version)
+                http_scenarios, memory_scenarios = scenarios_for_version(version)
 
-                for scenario in http_scenarios:
-                    run_command(
-                        [
-                            "bash",
-                            str(RUNNERS_DIR / "run_quarkus_http_benchmark.sh"),
-                            version,
-                            scenario,
-                            args.http_duration,
-                            str(args.http_vus),
-                        ],
-                        env={**env, "PORT": str(args.port)},
-                        label=f"HTTP scenario '{scenario}' for Java {version}",
-                    )
-            finally:
-                if process is not None:
-                    stop_process(process, app_log_handle)
-            step(f"HTTP suite Java {version}")
+                prep_message = f"Preparing Java {version} benchmark flow"
+                set_progress_message(progress, task_id, completed_tasks, total_tasks, prep_message)
+                note(prep_message)
 
-            for scenario in memory_scenarios:
-                mem_env = {**env, "PORT": str(args.memory_port)}
-                if args.heap_info:
-                    mem_env["HEAP_INFO"] = "true"
+                run_command(
+                    ["bash", str(RUNNERS_DIR / "run_jmh_suite.sh"), version],
+                    env=env,
+                    label=f"JMH microbenchmarks for Java {version}",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step(f"JMH Java {version}")
+
+                startup_env = {**env, "PORT": str(args.port)}
                 run_command(
                     [
                         "bash",
-                        str(RUNNERS_DIR / "run_quarkus_memory_benchmark.sh"),
+                        str(RUNNERS_DIR / "run_quarkus_startup_benchmark.sh"),
                         version,
-                        scenario,
+                        str(args.startup_repetitions),
                     ],
-                    env=mem_env,
-                    label=f"Memory scenario '{scenario}' for Java {version} on port {args.memory_port}",
+                    env=startup_env,
+                    label=f"Startup benchmark for Java {version}",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
                 )
-            step(f"Memory suite Java {version}")
+                step(f"Startup Java {version}")
 
-            if args.with_gc_suite:
-                run_command(
-                    ["bash", str(RUNNERS_DIR / "run_gc_suite.sh"), version],
-                    env=env,
-                    label=f"GC suite for Java {version}",
-                )
-                step(f"GC suite Java {version}")
+                process: subprocess.Popen[str] | None = None
+                app_log_handle: TextIO | None = None
+                try:
+                    process, app_log_handle, _ = start_quarkus_app(
+                        version,
+                        args.port,
+                        progress=progress,
+                        task_id=task_id,
+                        completed_tasks=completed_tasks,
+                        total_tasks=total_tasks,
+                    )
 
-        run_command(
-            ["python3", str(AGGREGATORS_DIR / "aggregate_startup_results.py")],
-            label="Aggregating startup benchmark results",
+                    for scenario in http_scenarios:
+                        run_command(
+                            [
+                                "bash",
+                                str(RUNNERS_DIR / "run_quarkus_http_benchmark.sh"),
+                                version,
+                                scenario,
+                                args.http_duration,
+                                str(args.http_vus),
+                            ],
+                            env={**env, "PORT": str(args.port)},
+                            label=f"HTTP {scenario} on Java {version}",
+                            progress=progress,
+                            task_id=task_id,
+                            completed_tasks=completed_tasks,
+                            total_tasks=total_tasks,
+                        )
+                finally:
+                    if process is not None:
+                        stop_process(process, app_log_handle)
+
+                step(f"HTTP suite Java {version}")
+
+                for scenario in memory_scenarios:
+                    mem_env = {**env, "PORT": str(args.memory_port)}
+                    if args.heap_info:
+                        mem_env["HEAP_INFO"] = "true"
+
+                    run_command(
+                        [
+                            "bash",
+                            str(RUNNERS_DIR / "run_quarkus_memory_benchmark.sh"),
+                            version,
+                            scenario,
+                        ],
+                        env=mem_env,
+                        label=f"Memory {scenario} on Java {version}",
+                        progress=progress,
+                        task_id=task_id,
+                        completed_tasks=completed_tasks,
+                        total_tasks=total_tasks,
+                    )
+
+                step(f"Memory suite Java {version}")
+
+                if args.with_gc_suite:
+                    run_command(
+                        ["bash", str(RUNNERS_DIR / "run_gc_suite.sh"), version],
+                        env=env,
+                        label=f"GC suite for Java {version}",
+                        progress=progress,
+                        task_id=task_id,
+                        completed_tasks=completed_tasks,
+                        total_tasks=total_tasks,
+                    )
+                    step(f"GC suite Java {version}")
+
+            run_command(
+                ["python3", str(AGGREGATORS_DIR / "aggregate_startup_results.py")],
+                label="Aggregating startup results",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Aggregate startup results")
+
+            run_command(
+                ["python3", str(AGGREGATORS_DIR / "aggregate_quarkus_results.py")],
+                label="Aggregating HTTP results",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Aggregate HTTP results")
+
+            run_command(
+                ["python3", str(AGGREGATORS_DIR / "aggregate_memory_results.py")],
+                label="Aggregating memory results",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Aggregate memory results")
+
+            run_command(
+                ["python3", str(CHARTS_DIR / "generate_startup_chart.py")],
+                label="Generating startup chart",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Generate startup chart")
+
+            run_command(
+                ["python3", str(CHARTS_DIR / "generate_quarkus_charts.py")],
+                label="Generating Quarkus charts",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Generate Quarkus charts")
+
+            set_progress_message(
+                progress,
+                task_id,
+                completed_tasks,
+                total_tasks,
+                "Benchmark lab completed",
+            )
+
+        LIVE_PROGRESS_ACTIVE = False
+
+        success("Full benchmark lab completed successfully.", force_console=True)
+        success(
+            f"Processed results: {PROJECT_ROOT / 'results' / 'processed'}",
+            force_console=True,
         )
-        step("Aggregate startup results")
-
-        run_command(
-            ["python3", str(AGGREGATORS_DIR / "aggregate_quarkus_results.py")],
-            label="Aggregating HTTP benchmark results",
+        success(
+            f"Charts: {PROJECT_ROOT / 'results' / 'charts'}",
+            force_console=True,
         )
-        step("Aggregate HTTP results")
-
-        run_command(
-            ["python3", str(AGGREGATORS_DIR / "aggregate_memory_results.py")],
-            label="Aggregating memory benchmark results",
-        )
-        step("Aggregate memory results")
-
-        run_command(
-            ["python3", str(CHARTS_DIR / "generate_startup_chart.py")],
-            label="Generating startup comparison chart",
-        )
-        step("Generate startup chart")
-
-        run_command(
-            ["python3", str(CHARTS_DIR / "generate_quarkus_charts.py")],
-            label="Generating Quarkus comparison charts",
-        )
-        step("Generate Quarkus charts")
-
-        success("Full benchmark lab completed successfully.")
-        success(f"Processed results: {PROJECT_ROOT / 'results' / 'processed'}")
-        success(f"Charts: {PROJECT_ROOT / 'results' / 'charts'}")
-        success(f"Run log: {log_path}")
+        success(f"Run log: {log_path}", force_console=True)
         return 0
 
     except KeyboardInterrupt:
-        error("Interrupted by user.")
+        LIVE_PROGRESS_ACTIVE = False
+        error("Interrupted by user.", force_console=True)
         return 130
     except Exception as exc:
-        error(str(exc))
+        LIVE_PROGRESS_ACTIVE = False
+        error(str(exc), force_console=True)
         return 1
     finally:
+        LIVE_PROGRESS_ACTIVE = False
         if RUN_LOGGER is not None:
             RUN_LOGGER.close()
 

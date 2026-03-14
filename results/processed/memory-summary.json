@@ -32,9 +32,9 @@
   {
     "java_version": "21",
     "scenario": "aggregate-platform",
-    "idle_rss_kb": 144272,
-    "post_load_rss_kb": 228096,
-    "rss_delta_kb": 83824,
+    "idle_rss_kb": 123072,
+    "post_load_rss_kb": 230768,
+    "rss_delta_kb": 107696,
     "pid": 0,
     "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/aggregate-platform-memory-java21.log",
     "source_file": "results/raw/java21/memory/aggregate-platform-memory-java21.txt"
@@ -42,9 +42,9 @@
   {
     "java_version": "21",
     "scenario": "aggregate-virtual",
-    "idle_rss_kb": 143424,
-    "post_load_rss_kb": 228304,
-    "rss_delta_kb": 84880,
+    "idle_rss_kb": 142720,
+    "post_load_rss_kb": 226608,
+    "rss_delta_kb": 83888,
     "pid": 0,
     "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/aggregate-virtual-memory-java21.log",
     "source_file": "results/raw/java21/memory/aggregate-virtual-memory-java21.txt"
@@ -52,9 +52,9 @@
   {
     "java_version": "21",
     "scenario": "products",
-    "idle_rss_kb": 142528,
-    "post_load_rss_kb": 228352,
-    "rss_delta_kb": 85824,
+    "idle_rss_kb": 142128,
+    "post_load_rss_kb": 232064,
+    "rss_delta_kb": 89936,
     "pid": 0,
     "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/products-memory-java21.log",
     "source_file": "results/raw/java21/memory/products-memory-java21.txt"
@@ -62,9 +62,9 @@
   {
     "java_version": "21",
     "scenario": "transform",
-    "idle_rss_kb": 143760,
-    "post_load_rss_kb": 212352,
-    "rss_delta_kb": 68592,
+    "idle_rss_kb": 123904,
+    "post_load_rss_kb": 211520,
+    "rss_delta_kb": 87616,
     "pid": 0,
     "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/transform-memory-java21.log",
     "source_file": "results/raw/java21/memory/transform-memory-java21.txt"
