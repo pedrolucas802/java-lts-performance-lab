@@ -1,4 +1,8 @@
-java_version,startup_ms,port,log_file,source_file
-17,10,8080,results/raw/java17/quarkus/startup-java17.log,results/raw/java17/quarkus/startup-java17.txt
-21,13,8080,results/raw/java21/quarkus/startup-java21.log,results/raw/java21/quarkus/startup-java21.txt
-25,10,8080,results/raw/java25/quarkus/startup-java25.log,results/raw/java25/quarkus/startup-java25.txt
+java_version,run_number,external_startup_ms,quarkus_startup_ms,port,log_file,source_file
+17,1,10,,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run1.log,results/raw/java17/quarkus/startup-java17-run1.txt
+17,2,9,,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run2.log,results/raw/java17/quarkus/startup-java17-run2.txt
+17,3,9,,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run3.log,results/raw/java17/quarkus/startup-java17-run3.txt
+21,1,479,299,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/quarkus/startup-java21-run1.log,results/raw/java21/quarkus/startup-java21-run1.txt
+21,2,9,,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/quarkus/startup-java21-run2.log,results/raw/java21/quarkus/startup-java21-run2.txt
+25,1,10,,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/quarkus/startup-java25-run1.log,results/raw/java25/quarkus/startup-java25-run1.txt
+25,2,10,,8080,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/quarkus/startup-java25-run2.log,results/raw/java25/quarkus/startup-java25-run2.txt

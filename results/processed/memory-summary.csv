@@ -1,0 +1,12 @@
+java_version,scenario,idle_rss_kb,post_load_rss_kb,rss_delta_kb,pid,log_file,source_file
+17,aggregate-platform,137168,250928,113760,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/aggregate-platform-memory-java17.log,results/raw/java17/memory/aggregate-platform-memory-java17.txt
+17,products,137728,229680,91952,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/products-memory-java17.log,results/raw/java17/memory/products-memory-java17.txt
+17,transform,138096,199168,61072,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/transform-memory-java17.log,results/raw/java17/memory/transform-memory-java17.txt
+21,aggregate-platform,144272,228096,83824,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/aggregate-platform-memory-java21.log,results/raw/java21/memory/aggregate-platform-memory-java21.txt
+21,aggregate-virtual,143424,228304,84880,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/aggregate-virtual-memory-java21.log,results/raw/java21/memory/aggregate-virtual-memory-java21.txt
+21,products,142528,228352,85824,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/products-memory-java21.log,results/raw/java21/memory/products-memory-java21.txt
+21,transform,143760,212352,68592,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/transform-memory-java21.log,results/raw/java21/memory/transform-memory-java21.txt
+25,aggregate-platform,140720,435168,294448,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-platform-memory-java25.log,results/raw/java25/memory/aggregate-platform-memory-java25.txt
+25,aggregate-virtual,140560,422128,281568,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-virtual-memory-java25.log,results/raw/java25/memory/aggregate-virtual-memory-java25.txt
+25,products,140464,189440,48976,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/products-memory-java25.log,results/raw/java25/memory/products-memory-java25.txt
+25,transform,142304,184976,42672,0,/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/transform-memory-java25.log,results/raw/java25/memory/transform-memory-java25.txt

@@ -1,0 +1,8 @@
+java_version=25
+scenario=products
+idle_rss_kb=140464
+post_load_rss_kb=189440
+rss_delta_kb=48976
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/products-memory-java25.log
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/products-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/products-k6.json

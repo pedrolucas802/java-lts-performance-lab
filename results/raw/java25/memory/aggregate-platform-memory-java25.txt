@@ -1,0 +1,8 @@
+java_version=25
+scenario=aggregate-platform
+idle_rss_kb=140720
+post_load_rss_kb=435168
+rss_delta_kb=294448
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-platform-memory-java25.log
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-platform-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-platform-k6.json

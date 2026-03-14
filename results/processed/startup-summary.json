@@ -1,23 +1,65 @@
 [
   {
     "java_version": "17",
-    "startup_ms": 10,
+    "run_number": 1,
+    "external_startup_ms": 10,
+    "quarkus_startup_ms": null,
     "port": 8080,
-    "log_file": "results/raw/java17/quarkus/startup-java17.log",
-    "source_file": "results/raw/java17/quarkus/startup-java17.txt"
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run1.log",
+    "source_file": "results/raw/java17/quarkus/startup-java17-run1.txt"
+  },
+  {
+    "java_version": "17",
+    "run_number": 2,
+    "external_startup_ms": 9,
+    "quarkus_startup_ms": null,
+    "port": 8080,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run2.log",
+    "source_file": "results/raw/java17/quarkus/startup-java17-run2.txt"
+  },
+  {
+    "java_version": "17",
+    "run_number": 3,
+    "external_startup_ms": 9,
+    "quarkus_startup_ms": null,
+    "port": 8080,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run3.log",
+    "source_file": "results/raw/java17/quarkus/startup-java17-run3.txt"
   },
   {
     "java_version": "21",
-    "startup_ms": 13,
+    "run_number": 1,
+    "external_startup_ms": 479,
+    "quarkus_startup_ms": 299,
     "port": 8080,
-    "log_file": "results/raw/java21/quarkus/startup-java21.log",
-    "source_file": "results/raw/java21/quarkus/startup-java21.txt"
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/quarkus/startup-java21-run1.log",
+    "source_file": "results/raw/java21/quarkus/startup-java21-run1.txt"
+  },
+  {
+    "java_version": "21",
+    "run_number": 2,
+    "external_startup_ms": 9,
+    "quarkus_startup_ms": null,
+    "port": 8080,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/quarkus/startup-java21-run2.log",
+    "source_file": "results/raw/java21/quarkus/startup-java21-run2.txt"
   },
   {
     "java_version": "25",
-    "startup_ms": 10,
+    "run_number": 1,
+    "external_startup_ms": 10,
+    "quarkus_startup_ms": null,
     "port": 8080,
-    "log_file": "results/raw/java25/quarkus/startup-java25.log",
-    "source_file": "results/raw/java25/quarkus/startup-java25.txt"
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/quarkus/startup-java25-run1.log",
+    "source_file": "results/raw/java25/quarkus/startup-java25-run1.txt"
+  },
+  {
+    "java_version": "25",
+    "run_number": 2,
+    "external_startup_ms": 10,
+    "quarkus_startup_ms": null,
+    "port": 8080,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/quarkus/startup-java25-run2.log",
+    "source_file": "results/raw/java25/quarkus/startup-java25-run2.txt"
   }
 ]

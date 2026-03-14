@@ -1,0 +1,115 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /Users/patriciarego/Desktop/dev/java-lts-performance-lab/infra/k6/aggregate.js
+        output: json (/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/aggregate-platform-k6.json)
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 50s max duration (incl. graceful stop):
+              * default: 50 looping VUs for 20s (gracefulStop: 30s)
+
+
+running (01.0s), 50/50 VUs, 450 complete and 0 interrupted iterations
+default   [   5% ] 50 VUs  01.0s/20s
+
+running (02.0s), 50/50 VUs, 950 complete and 0 interrupted iterations
+default   [  10% ] 50 VUs  02.0s/20s
+
+running (03.0s), 50/50 VUs, 1453 complete and 0 interrupted iterations
+default   [  15% ] 50 VUs  03.0s/20s
+
+running (04.0s), 50/50 VUs, 2000 complete and 0 interrupted iterations
+default   [  20% ] 50 VUs  04.0s/20s
+
+running (05.0s), 50/50 VUs, 2500 complete and 0 interrupted iterations
+default   [  25% ] 50 VUs  05.0s/20s
+
+running (06.0s), 50/50 VUs, 3013 complete and 0 interrupted iterations
+default   [  30% ] 50 VUs  06.0s/20s
+
+running (07.0s), 50/50 VUs, 3554 complete and 0 interrupted iterations
+default   [  35% ] 50 VUs  07.0s/20s
+
+running (08.0s), 50/50 VUs, 4067 complete and 0 interrupted iterations
+default   [  40% ] 50 VUs  08.0s/20s
+
+running (09.0s), 50/50 VUs, 4605 complete and 0 interrupted iterations
+default   [  45% ] 50 VUs  09.0s/20s
+
+running (10.0s), 50/50 VUs, 5133 complete and 0 interrupted iterations
+default   [  50% ] 50 VUs  10.0s/20s
+
+running (11.0s), 50/50 VUs, 5651 complete and 0 interrupted iterations
+default   [  55% ] 50 VUs  11.0s/20s
+
+running (12.0s), 50/50 VUs, 6163 complete and 0 interrupted iterations
+default   [  60% ] 50 VUs  12.0s/20s
+
+running (13.0s), 50/50 VUs, 6705 complete and 0 interrupted iterations
+default   [  65% ] 50 VUs  13.0s/20s
+
+running (14.0s), 50/50 VUs, 7221 complete and 0 interrupted iterations
+default   [  70% ] 50 VUs  14.0s/20s
+
+running (15.0s), 50/50 VUs, 7761 complete and 0 interrupted iterations
+default   [  75% ] 50 VUs  15.0s/20s
+
+running (16.0s), 50/50 VUs, 8280 complete and 0 interrupted iterations
+default   [  80% ] 50 VUs  16.0s/20s
+
+running (17.0s), 50/50 VUs, 8812 complete and 0 interrupted iterations
+default   [  85% ] 50 VUs  17.0s/20s
+
+running (18.0s), 50/50 VUs, 9343 complete and 0 interrupted iterations
+default   [  90% ] 50 VUs  18.0s/20s
+
+running (19.0s), 50/50 VUs, 9862 complete and 0 interrupted iterations
+default   [  95% ] 50 VUs  19.0s/20s
+
+running (20.0s), 50/50 VUs, 10393 complete and 0 interrupted iterations
+default   [ 100% ] 50 VUs  20.0s/20s
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✓ 'p(95)<1000' p(95)=50.13ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 10443   519.768964/s
+    checks_succeeded...: 100.00% 10443 out of 10443
+    checks_failed......: 0.00%   0 out of 10443
+
+    ✓ status is 200
+
+    HTTP
+    http_req_duration..............: avg=45.66ms min=40.25ms med=45.42ms max=95.38ms  p(90)=48.81ms p(95)=50.13ms 
+      { expected_response:true }...: avg=45.66ms min=40.25ms med=45.42ms max=95.38ms  p(90)=48.81ms p(95)=50.13ms 
+    http_req_failed................: 0.00%  0 out of 10443
+    http_reqs......................: 10443  519.768964/s
+
+    EXECUTION
+    iteration_duration.............: avg=96.06ms min=90.36ms med=95.79ms max=147.38ms p(90)=99.27ms p(95)=100.69ms
+    iterations.....................: 10443  519.768964/s
+    vus............................: 50     min=50         max=50
+    vus_max........................: 50     min=50         max=50
+
+    NETWORK
+    data_received..................: 3.1 MB 153 kB/s
+    data_sent......................: 971 kB 48 kB/s
+
+
+
+
+running (20.1s), 00/50 VUs, 10443 complete and 0 interrupted iterations
+default ✓ [ 100% ] 50 VUs  20s

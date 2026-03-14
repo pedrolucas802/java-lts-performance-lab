@@ -1,0 +1,8 @@
+java_version=25
+scenario=transform
+idle_rss_kb=142304
+post_load_rss_kb=184976
+rss_delta_kb=42672
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/transform-memory-java25.log
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/transform-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/transform-k6.json

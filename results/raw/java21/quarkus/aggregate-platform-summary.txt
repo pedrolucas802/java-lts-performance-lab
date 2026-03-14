@@ -1,0 +1,85 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /Users/patriciarego/Desktop/dev/java-lts-performance-lab/infra/k6/aggregate.js
+        output: json (/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/quarkus/aggregate-platform-k6.json)
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 40s max duration (incl. graceful stop):
+              * default: 50 looping VUs for 10s (gracefulStop: 30s)
+
+
+running (01.0s), 50/50 VUs, 500 complete and 0 interrupted iterations
+default   [  10% ] 50 VUs  01.0s/10s
+
+running (02.0s), 50/50 VUs, 1000 complete and 0 interrupted iterations
+default   [  20% ] 50 VUs  02.0s/10s
+
+running (03.0s), 50/50 VUs, 1533 complete and 0 interrupted iterations
+default   [  30% ] 50 VUs  03.0s/10s
+
+running (04.0s), 50/50 VUs, 2056 complete and 0 interrupted iterations
+default   [  40% ] 50 VUs  04.0s/10s
+
+running (05.0s), 50/50 VUs, 2596 complete and 0 interrupted iterations
+default   [  50% ] 50 VUs  05.0s/10s
+
+running (06.0s), 50/50 VUs, 3107 complete and 0 interrupted iterations
+default   [  60% ] 50 VUs  06.0s/10s
+
+running (07.0s), 50/50 VUs, 3641 complete and 0 interrupted iterations
+default   [  70% ] 50 VUs  07.0s/10s
+
+running (08.0s), 50/50 VUs, 4157 complete and 0 interrupted iterations
+default   [  80% ] 50 VUs  08.0s/10s
+
+running (09.0s), 50/50 VUs, 4687 complete and 0 interrupted iterations
+default   [  90% ] 50 VUs  09.0s/10s
+
+running (10.0s), 50/50 VUs, 5207 complete and 0 interrupted iterations
+default   [ 100% ] 50 VUs  10.0s/10s
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✓ 'p(95)<1000' p(95)=49.5ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 5257    522.591054/s
+    checks_succeeded...: 100.00% 5257 out of 5257
+    checks_failed......: 0.00%   0 out of 5257
+
+    ✓ status is 200
+
+    HTTP
+    http_req_duration..............: avg=45ms    min=40.34ms med=44.95ms max=56.05ms  p(90)=48.09ms p(95)=49.5ms 
+      { expected_response:true }...: avg=45ms    min=40.34ms med=44.95ms max=56.05ms  p(90)=48.09ms p(95)=49.5ms 
+    http_req_failed................: 0.00%  0 out of 5257
+    http_reqs......................: 5257   522.591054/s
+
+    EXECUTION
+    iteration_duration.............: avg=95.39ms min=90.39ms med=95.34ms max=107.82ms p(90)=98.57ms p(95)=99.94ms
+    iterations.....................: 5257   522.591054/s
+    vus............................: 50     min=50        max=50
+    vus_max........................: 50     min=50        max=50
+
+    NETWORK
+    data_received..................: 1.5 MB 154 kB/s
+    data_sent......................: 489 kB 49 kB/s
+
+
+
+
+running (10.1s), 00/50 VUs, 5257 complete and 0 interrupted iterations
+default ✓ [ 100% ] 50 VUs  10s

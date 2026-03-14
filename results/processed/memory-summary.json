@@ -1,0 +1,112 @@
+[
+  {
+    "java_version": "17",
+    "scenario": "aggregate-platform",
+    "idle_rss_kb": 137168,
+    "post_load_rss_kb": 250928,
+    "rss_delta_kb": 113760,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/aggregate-platform-memory-java17.log",
+    "source_file": "results/raw/java17/memory/aggregate-platform-memory-java17.txt"
+  },
+  {
+    "java_version": "17",
+    "scenario": "products",
+    "idle_rss_kb": 137728,
+    "post_load_rss_kb": 229680,
+    "rss_delta_kb": 91952,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/products-memory-java17.log",
+    "source_file": "results/raw/java17/memory/products-memory-java17.txt"
+  },
+  {
+    "java_version": "17",
+    "scenario": "transform",
+    "idle_rss_kb": 138096,
+    "post_load_rss_kb": 199168,
+    "rss_delta_kb": 61072,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/transform-memory-java17.log",
+    "source_file": "results/raw/java17/memory/transform-memory-java17.txt"
+  },
+  {
+    "java_version": "21",
+    "scenario": "aggregate-platform",
+    "idle_rss_kb": 144272,
+    "post_load_rss_kb": 228096,
+    "rss_delta_kb": 83824,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/aggregate-platform-memory-java21.log",
+    "source_file": "results/raw/java21/memory/aggregate-platform-memory-java21.txt"
+  },
+  {
+    "java_version": "21",
+    "scenario": "aggregate-virtual",
+    "idle_rss_kb": 143424,
+    "post_load_rss_kb": 228304,
+    "rss_delta_kb": 84880,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/aggregate-virtual-memory-java21.log",
+    "source_file": "results/raw/java21/memory/aggregate-virtual-memory-java21.txt"
+  },
+  {
+    "java_version": "21",
+    "scenario": "products",
+    "idle_rss_kb": 142528,
+    "post_load_rss_kb": 228352,
+    "rss_delta_kb": 85824,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/products-memory-java21.log",
+    "source_file": "results/raw/java21/memory/products-memory-java21.txt"
+  },
+  {
+    "java_version": "21",
+    "scenario": "transform",
+    "idle_rss_kb": 143760,
+    "post_load_rss_kb": 212352,
+    "rss_delta_kb": 68592,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/memory/transform-memory-java21.log",
+    "source_file": "results/raw/java21/memory/transform-memory-java21.txt"
+  },
+  {
+    "java_version": "25",
+    "scenario": "aggregate-platform",
+    "idle_rss_kb": 140720,
+    "post_load_rss_kb": 435168,
+    "rss_delta_kb": 294448,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-platform-memory-java25.log",
+    "source_file": "results/raw/java25/memory/aggregate-platform-memory-java25.txt"
+  },
+  {
+    "java_version": "25",
+    "scenario": "aggregate-virtual",
+    "idle_rss_kb": 140560,
+    "post_load_rss_kb": 422128,
+    "rss_delta_kb": 281568,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-virtual-memory-java25.log",
+    "source_file": "results/raw/java25/memory/aggregate-virtual-memory-java25.txt"
+  },
+  {
+    "java_version": "25",
+    "scenario": "products",
+    "idle_rss_kb": 140464,
+    "post_load_rss_kb": 189440,
+    "rss_delta_kb": 48976,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/products-memory-java25.log",
+    "source_file": "results/raw/java25/memory/products-memory-java25.txt"
+  },
+  {
+    "java_version": "25",
+    "scenario": "transform",
+    "idle_rss_kb": 142304,
+    "post_load_rss_kb": 184976,
+    "rss_delta_kb": 42672,
+    "pid": 0,
+    "log_file": "/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/transform-memory-java25.log",
+    "source_file": "results/raw/java25/memory/transform-memory-java25.txt"
+  }
+]
