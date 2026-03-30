@@ -69,7 +69,7 @@ def collect_rows() -> list[dict]:
     for profile, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
         for file_path in sorted(java_dir.glob("startup-java*.txt")):
             parsed = parse_key_value_file(file_path)
-            metadata = scenario_metadata(parsed.get("scenario", "startup"), "startup")
+            metadata = scenario_metadata(parsed.get("scenario", "startup"), "startup", file_path)
 
             rows.append({
                 "java_version": java_version,

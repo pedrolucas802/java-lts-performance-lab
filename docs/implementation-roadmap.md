@@ -200,11 +200,11 @@ Feature comparison focus:
 
 ### Next changes to land
 
-1. Fix `aggregate-virtual` memory scenario handling.
-2. Fix Quarkus chart generation to include every scenario seen in processed data.
-3. Update the runbook and Make targets to reflect working commands.
-4. Add one optional Postgres-backed endpoint and scenario.
-5. Decide whether `run_full_benchmark_lab.py` becomes the primary orchestrator or remains an advanced entry point.
+1. Expand JMH coverage so the benchmark matrix matches the documented JVM microbenchmark scope.
+2. Add structured GC logging, parsing, and `gc-summary.csv`.
+3. Add JFR capture and summarized runtime analysis for representative scenarios.
+4. Run the full comparison matrix under `stock`, then publish and review the first `tuned` result set.
+5. Define the Linux-based isolated lane for container-aware and CPU-sensitive claims.
 
 ### Open questions for later milestones
 

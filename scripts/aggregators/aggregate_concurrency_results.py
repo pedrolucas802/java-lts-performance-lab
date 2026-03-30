@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
+from result_metadata import iter_track_dirs, scenario_metadata
 
-INPUT_CSV = Path("results/processed/quarkus-summary.csv")
+RESULTS_ROOT = Path("results/raw")
 OUTPUT_DIR = Path("results/processed")
 CSV_OUTPUT = OUTPUT_DIR / "concurrency-summary.csv"
 JSON_OUTPUT = OUTPUT_DIR / "concurrency-summary.json"
-CONCURRENCY_SCENARIOS = {"aggregate", "aggregate-platform", "aggregate-virtual"}
 
 
 def usage() -> None:
     print("Usage: python aggregate_concurrency_results.py")
-    print("Filters aggregate platform/virtual rows from results/processed/quarkus-summary.csv")
+    print("Aggregates raw concurrency ramp results from results/raw/*/concurrency/*-metrics.txt")
     print("Outputs to results/processed/concurrency-summary.csv and .json")
 
 
@@ -30,39 +31,108 @@ def find_project_root() -> Path:
 
 
 def validate_inputs() -> bool:
-    if not INPUT_CSV.exists():
-        print(f"ERROR: Input file not found: {INPUT_CSV}")
+    if not RESULTS_ROOT.exists():
+        print(f"ERROR: Results directory not found: {RESULTS_ROOT}")
         return False
     return True
 
 
-def load_rows() -> list[dict[str, str]]:
+def parse_key_value_file(file_path: Path) -> dict[str, str]:
+    data: dict[str, str] = {}
     try:
-        with INPUT_CSV.open("r", encoding="utf-8", newline="") as handle:
-            return list(csv.DictReader(handle))
+        for line in file_path.read_text(encoding="utf-8").splitlines():
+            if "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            data[key.strip()] = value.strip()
     except Exception as exc:
-        print(f"ERROR: Failed to read input CSV {INPUT_CSV}: {exc}")
-        sys.exit(1)
+        print(f"WARNING: Failed to parse {file_path}: {exc}")
+    return data
 
 
-def collect_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
-    concurrency_rows = [
-        row for row in rows
-        if row.get("scenario") in CONCURRENCY_SCENARIOS
-    ]
-    concurrency_rows.sort(
+def extract_float(pattern: str, text: str) -> float | None:
+    match = re.search(pattern, text, re.MULTILINE)
+    if not match:
+        return None
+    return float(match.group(1))
+
+
+def extract_int(pattern: str, text: str) -> int | None:
+    match = re.search(pattern, text, re.MULTILINE)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def parse_summary_file(file_path: Path) -> dict[str, float | int | None]:
+    try:
+        text = file_path.read_text(encoding="utf-8")
+    except Exception as exc:
+        print(f"WARNING: Failed to read {file_path}: {exc}")
+        return {}
+
+    return {
+        "http_reqs": extract_int(r"http_reqs\.*:\s+(\d+)", text),
+        "reqs_per_sec": extract_float(r"http_reqs\.*:\s+\d+\s+([0-9.]+)\/s", text),
+        "avg_ms": extract_float(r"http_req_duration\.*:\s+avg=([0-9.]+)ms", text),
+        "p90_ms": extract_float(r"p\(90\)=([0-9.]+)ms", text),
+        "p95_ms": extract_float(r"p\(95\)=([0-9.]+)ms", text),
+        "max_ms": extract_float(r"max=([0-9.]+)ms", text),
+        "failed_rate": extract_float(r"http_req_failed\.*:\s+([0-9.]+)%", text),
+    }
+
+
+def collect_rows() -> list[dict[str, str | int | float | None]]:
+    rows: list[dict[str, str | int | float | None]] = []
+
+    for profile, java_version, concurrency_dir in iter_track_dirs(RESULTS_ROOT, "concurrency"):
+        for metrics_file in sorted(concurrency_dir.glob("*-metrics.txt")):
+            parsed = parse_key_value_file(metrics_file)
+            scenario = parsed.get("scenario", "")
+            metadata = scenario_metadata(scenario, parsed.get("run_class", "concurrency"), metrics_file)
+
+            summary_file = Path(parsed.get("summary_file", metrics_file.name.replace("-metrics.txt", "-summary.txt")))
+            if not summary_file.is_absolute():
+                summary_file = metrics_file.parent / summary_file.name
+
+            summary_metrics = parse_summary_file(summary_file)
+            if not summary_metrics:
+                continue
+
+            rows.append({
+                "java_version": java_version,
+                "scenario": metadata["scenario"],
+                "profile": parsed.get("profile", profile),
+                "thread_mode": parsed.get("thread_mode", metadata["thread_mode"]),
+                "db_mode": parsed.get("db_mode", metadata["db_mode"]),
+                "run_class": parsed.get("run_class", metadata["run_class"]),
+                "vus": int(parsed.get("vus", "0")),
+                "duration": parsed.get("duration", ""),
+                "http_reqs": summary_metrics["http_reqs"],
+                "reqs_per_sec": summary_metrics["reqs_per_sec"],
+                "avg_ms": summary_metrics["avg_ms"],
+                "p90_ms": summary_metrics["p90_ms"],
+                "p95_ms": summary_metrics["p95_ms"],
+                "max_ms": summary_metrics["max_ms"],
+                "failed_rate": summary_metrics["failed_rate"],
+                "summary_file": str(summary_file),
+                "source_file": str(metrics_file),
+            })
+
+    rows.sort(
         key=lambda row: (
-            row.get("profile", "stock"),
-            int(row.get("java_version", "0")),
-            row.get("scenario", ""),
+            str(row["profile"]),
+            int(str(row["java_version"])),
+            int(str(row["vus"])),
+            str(row["scenario"]),
         )
     )
-    return concurrency_rows
+    return rows
 
 
-def write_csv(rows: list[dict[str, str]]) -> None:
+def write_csv(rows: list[dict[str, str | int | float | None]]) -> None:
     if not rows:
-        print("FAILURE: No aggregate concurrency rows found in Quarkus summary data")
+        print("FAILURE: No aggregate concurrency rows found in raw concurrency data")
         sys.exit(1)
 
     fieldnames = [
@@ -72,6 +142,8 @@ def write_csv(rows: list[dict[str, str]]) -> None:
         "thread_mode",
         "db_mode",
         "run_class",
+        "vus",
+        "duration",
         "http_reqs",
         "reqs_per_sec",
         "avg_ms",
@@ -79,6 +151,7 @@ def write_csv(rows: list[dict[str, str]]) -> None:
         "p95_ms",
         "max_ms",
         "failed_rate",
+        "summary_file",
         "source_file",
     ]
 
@@ -92,7 +165,7 @@ def write_csv(rows: list[dict[str, str]]) -> None:
         sys.exit(1)
 
 
-def write_json(rows: list[dict[str, str]]) -> None:
+def write_json(rows: list[dict[str, str | int | float | None]]) -> None:
     try:
         JSON_OUTPUT.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     except Exception as exc:
@@ -113,7 +186,7 @@ def main() -> None:
         sys.exit(1)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    rows = collect_rows(load_rows())
+    rows = collect_rows()
     write_csv(rows)
     write_json(rows)
 

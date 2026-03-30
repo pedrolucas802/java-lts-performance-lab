@@ -83,7 +83,7 @@ def parse_summary_file(file_path: Path, java_version: str, scenario: str, profil
 
     failed_rate = extract_float(r"http_req_failed\.*:\s+([0-9.]+)%", text)
 
-    metadata = scenario_metadata(scenario, "http")
+    metadata = scenario_metadata(scenario, "http", file_path)
 
     return {
         "java_version": java_version,

@@ -29,6 +29,13 @@ python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile 
 # 5. Optional mixed-workload run
 python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --profile stock --include-mixed-workload
 
+# Confidence Levels
+Use these labels when interpreting results:
+
+- local smoke: verifies commands, endpoint behavior, and artifact generation
+- local comparative: useful for preliminary JDK comparisons on one machine with background noise minimized
+- isolated/publishable: requires a stricter environment, ideally separate load generation and a Linux lane for container claims
+
 # Targeted Smoke and Rerun Commands
 
 # 1. Run JMH only
@@ -56,13 +63,16 @@ BENCHMARK_PROFILE=stock bash scripts/runners/run_quarkus_memory_benchmark.sh 21 
 BENCHMARK_PROFILE=stock bash scripts/runners/run_quarkus_memory_benchmark.sh 21 aggregate-platform
 BENCHMARK_PROFILE=stock bash scripts/runners/run_quarkus_memory_benchmark.sh 21 aggregate-virtual
 
-# 6. Aggregate results
+# 6. Run the dedicated concurrency ramp study
+BENCHMARK_PROFILE=stock bash scripts/runners/run_concurrency_study.sh 21 20s 2,10,25,50
+
+# 7. Aggregate results
 python3 scripts/aggregators/aggregate_quarkus_results.py
 python3 scripts/aggregators/aggregate_startup_results.py
 python3 scripts/aggregators/aggregate_concurrency_results.py
 python3 scripts/aggregators/aggregate_memory_results.py
 
-# 7. Generate charts
+# 8. Generate charts
 python3 scripts/charts/generate_startup_chart.py
 python3 scripts/charts/generate_quarkus_charts.py
 python3 scripts/charts/generate_concurrency_charts.py

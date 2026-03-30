@@ -23,9 +23,7 @@ JMH benchmarks isolate JVM behavior without framework overhead.
 Current benchmarks include:
 
 - JSON serialization
-- object allocation behavior
-- collections operations
-- string manipulation workloads
+- allocation, collections, and string workloads are still planned
 
 These benchmarks are used to evaluate **core JVM runtime performance** across Java versions.
 
@@ -62,7 +60,7 @@ Current scenarios include:
 - `products` workload
 - `products-db` workload
 - `transform` workload
-- `aggregate` concurrency workload
+- `aggregate-platform` and `aggregate-virtual` concurrency workloads
 - `mixed-workload` as an optional weighted traffic blend
 
 These scenarios allow measurement of:
@@ -179,8 +177,10 @@ Planned improvements:
 Implemented:
 
 - `/aggregate` endpoint for concurrency testing
-- platform-thread execution mode
-- virtual-thread execution mode
+- platform-thread execution mode over JDBC fan-out
+- virtual-thread execution mode over the same JDBC fan-out workload
+- dedicated `concurrency-summary.csv` aggregation
+- platform-vs-virtual concurrency charts
 
 Upcoming experiments will compare:
 

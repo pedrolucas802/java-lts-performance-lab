@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 INPUT_CSV = Path("results/processed/concurrency-summary.csv")
 OUTPUT_DIR = Path("results/charts")
-THREAD_ORDER = ["aggregate-platform", "aggregate-virtual", "aggregate"]
 
 
 def usage() -> None:
@@ -39,10 +38,20 @@ def default_profile_name(profiles: list[str]) -> str:
     return "stock" if "stock" in profiles else profiles[0]
 
 
-def ordered_scenarios(profile_rows: list[dict[str, str]]) -> list[str]:
-    available = {row["scenario"] for row in profile_rows}
-    ordered = [scenario for scenario in THREAD_ORDER if scenario in available]
-    extras = sorted(available.difference(THREAD_ORDER))
+def ordered_series(profile_rows: list[dict[str, str]]) -> list[tuple[str, str]]:
+    preferred = [
+        ("17", "aggregate-platform"),
+        ("21", "aggregate-platform"),
+        ("21", "aggregate-virtual"),
+        ("25", "aggregate-platform"),
+        ("25", "aggregate-virtual"),
+    ]
+    available = {
+        (row["java_version"], row["scenario"])
+        for row in profile_rows
+    }
+    ordered = [item for item in preferred if item in available]
+    extras = sorted(available.difference(preferred), key=lambda item: (int(item[0]), item[1]))
     return ordered + extras
 
 
@@ -53,32 +62,35 @@ def generate_metric_chart(
     title: str,
     output_file: Path,
 ) -> None:
-    java_versions = sorted({row["java_version"] for row in profile_rows}, key=int)
-    scenarios = ordered_scenarios(profile_rows)
+    vus_values = sorted({int(row["vus"]) for row in profile_rows if row.get("vus")})
+    series_order = ordered_series(profile_rows)
     series = {
-        (row["java_version"], row["scenario"]): float(row[metric_key]) if row.get(metric_key) else 0.0
+        (row["java_version"], row["scenario"], int(row["vus"])): float(row[metric_key]) if row.get(metric_key) else 0.0
         for row in profile_rows
     }
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    bar_width = 0.22
-    x = range(len(java_versions))
 
-    for index, scenario in enumerate(scenarios):
+    for java_version, scenario in series_order:
         values = [
-            series.get((java_version, scenario), 0.0)
-            for java_version in java_versions
+            series.get((java_version, scenario, vus), 0.0)
+            for vus in vus_values
         ]
-        positions = [value + index * bar_width for value in x]
-        ax.bar(positions, values, bar_width, label=scenario)
+        thread_mode = scenario.replace("aggregate-", "")
+        ax.plot(
+            vus_values,
+            values,
+            marker="o",
+            linewidth=2,
+            label=f"Java {java_version} {thread_mode}",
+        )
 
-    ax.set_xlabel("Java version")
+    ax.set_xlabel("Concurrent VUs")
     ax.set_ylabel(metric_label)
     ax.set_title(title)
-    center_offset = bar_width * max(len(scenarios) - 1, 0) / 2
-    ax.set_xticks([value + center_offset for value in x])
-    ax.set_xticklabels([f"Java {java_version}" for java_version in java_versions])
+    ax.set_xticks(vus_values)
     ax.legend()
+    ax.grid(True, axis="y", alpha=0.3)
     plt.tight_layout()
     plt.savefig(output_file, dpi=150)
     plt.close()
@@ -121,7 +133,7 @@ def main() -> None:
             profile_rows,
             "reqs_per_sec",
             "Requests/sec",
-            f"Aggregate Throughput by Thread Mode ({profile})",
+            f"Aggregate Throughput Ramp by Thread Mode ({profile})",
             throughput_png,
         )
         outputs.append(throughput_png)
@@ -131,7 +143,7 @@ def main() -> None:
             profile_rows,
             "p95_ms",
             "P95 latency (ms)",
-            f"Aggregate P95 Latency by Thread Mode ({profile})",
+            f"Aggregate P95 Latency Ramp by Thread Mode ({profile})",
             latency_png,
         )
         outputs.append(latency_png)

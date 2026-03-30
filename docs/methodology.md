@@ -116,6 +116,18 @@ Aggregation scripts combine repeated runs into:
 
 ---
 
+## Confidence Levels
+
+Benchmark results are interpreted using three confidence levels:
+
+- **local smoke** for command validation, endpoint correctness, and artifact generation
+- **local comparative** for same-machine Java-to-Java comparisons with background noise minimized
+- **isolated / publishable** for claims that require separate load generation, stricter CPU isolation, or Linux-only container validation
+
+Current macOS local runs are valid for development and preliminary comparisons, but container-aware and low-level CPU conclusions should wait for the isolated lane.
+
+---
+
 # Analysis Pipeline
 
 ## Raw Data Storage

@@ -71,7 +71,7 @@ def collect_rows() -> list[dict]:
     for profile, java_version, memory_dir in iter_track_dirs(RESULTS_ROOT, "memory"):
         for metrics_file in sorted(memory_dir.glob("*-memory-java*.txt")):
             parsed = parse_key_value_file(metrics_file)
-            metadata = scenario_metadata(parsed.get("scenario", ""), "memory")
+            metadata = scenario_metadata(parsed.get("scenario", ""), "memory", metrics_file)
 
             rows.append({
                 "java_version": java_version,

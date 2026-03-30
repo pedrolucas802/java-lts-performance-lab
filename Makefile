@@ -1,4 +1,4 @@
-.PHONY: help jmh startup charts clean aggregate full-lab
+.PHONY: help jmh startup concurrency charts clean aggregate full-lab
 
 JAVA_VERSION ?= 21
 PROFILE ?= stock
@@ -8,6 +8,7 @@ help:
 	@echo "Available targets:"
 	@echo "  make jmh"
 	@echo "  make startup"
+	@echo "  make concurrency"
 	@echo "  make aggregate"
 	@echo "  make charts"
 	@echo "  make full-lab"
@@ -19,9 +20,13 @@ jmh:
 startup:
 	BENCHMARK_PROFILE=$(PROFILE) bash scripts/runners/run_quarkus_startup_benchmark.sh $(JAVA_VERSION) 3
 
+concurrency:
+	BENCHMARK_PROFILE=$(PROFILE) bash scripts/runners/run_concurrency_study.sh $(JAVA_VERSION) 20s 2,10,25,50
+
 charts:
 	python3 scripts/charts/generate_startup_chart.py
 	python3 scripts/charts/generate_quarkus_charts.py
+	python3 scripts/charts/generate_concurrency_charts.py
 
 clean:
 	find . -name target -type d -exec rm -rf {} +
@@ -29,6 +34,7 @@ clean:
 aggregate:
 	python3 scripts/aggregators/aggregate_startup_results.py
 	python3 scripts/aggregators/aggregate_quarkus_results.py
+	python3 scripts/aggregators/aggregate_concurrency_results.py
 	python3 scripts/aggregators/aggregate_memory_results.py
 
 full-lab:

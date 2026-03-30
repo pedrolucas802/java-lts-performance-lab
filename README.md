@@ -138,6 +138,7 @@ Current progress:
 - JMH microbenchmarks implemented
 - Quarkus benchmark application implemented
 - DB-backed `products-db` scenario implemented as the primary real-I/O baseline
+- DB-backed aggregate fan-out implemented as the primary concurrency workload
 - profile-aware benchmark configs added for `stock` and `tuned` runs
 - full benchmark runner promoted as the canonical orchestrator
 - startup benchmark pipeline working

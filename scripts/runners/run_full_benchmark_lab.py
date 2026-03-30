@@ -456,6 +456,7 @@ def task_plan(versions: Iterable[str], *, include_gc: bool, skip_jmh: bool) -> l
             tasks.append(f"JMH Java {version}")
         tasks.append(f"Startup Java {version}")
         tasks.append(f"HTTP suite Java {version}")
+        tasks.append(f"Concurrency study Java {version}")
         tasks.append(f"Memory suite Java {version}")
         if include_gc:
             tasks.append(f"GC suite Java {version}")
@@ -527,6 +528,16 @@ def main() -> int:
         help="Memory benchmark virtual users. Default: 20",
     )
     parser.add_argument(
+        "--concurrency-duration",
+        default="20s",
+        help="Concurrency ramp duration per VU level. Default: 20s",
+    )
+    parser.add_argument(
+        "--concurrency-vus-list",
+        default="2,10,25,50",
+        help="Comma-separated VU ramp list for the concurrency study. Default: 2,10,25,50",
+    )
+    parser.add_argument(
         "--port",
         type=int,
         default=8080,
@@ -593,6 +604,8 @@ def main() -> int:
         logger.write_line(f"Startup repetitions: {args.startup_repetitions}")
         logger.write_line(f"HTTP duration: {args.http_duration}")
         logger.write_line(f"HTTP VUs: {args.http_vus}")
+        logger.write_line(f"Concurrency duration: {args.concurrency_duration}")
+        logger.write_line(f"Concurrency VU ramp: {args.concurrency_vus_list}")
         logger.write_line(f"Memory duration: {args.memory_duration}")
         logger.write_line(f"Memory VUs: {args.memory_vus}")
         logger.write_line(f"Port: {args.port}")
@@ -651,7 +664,7 @@ def main() -> int:
                 http_scenarios, memory_scenarios = scenarios_for_version(version, args.include_mixed_workload)
 
                 requires_database = any(
-                    scenario in {"products-db", "mixed-workload"}
+                    scenario in {"products-db", "mixed-workload", "aggregate-platform", "aggregate-virtual"}
                     for scenario in (*http_scenarios, *memory_scenarios)
                 )
                 if requires_database and not runtime_env.get("BENCHMARK_DATASOURCE_URL"):
@@ -727,6 +740,23 @@ def main() -> int:
                         stop_process(process, app_log_handle)
 
                 step(f"HTTP suite Java {version}")
+
+                run_command(
+                    [
+                        "bash",
+                        str(RUNNERS_DIR / "run_concurrency_study.sh"),
+                        version,
+                        args.concurrency_duration,
+                        args.concurrency_vus_list,
+                    ],
+                    env=build_runtime_env(version, profile, {"PORT": str(args.port)}),
+                    label=f"Concurrency study for Java {version} ({profile.name})",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step(f"Concurrency study Java {version}")
 
                 for scenario in memory_scenarios:
                     mem_env = build_runtime_env(
