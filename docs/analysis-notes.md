@@ -172,15 +172,15 @@ mvn -version
 make jmh JAVA_VERSION=21
 ```
 
-This produces JSON baseline output under `results/raw/javaXX/jmh/`.
+This produces JSON baseline output under `results/raw/{profile}/{lane}/javaXX/jmh/`.
 
 ## 3. Run Quarkus startup benchmark
 
 ```bash
-./scripts/run_quarkus_startup_benchmark.sh 21
+BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_startup_benchmark.sh 21 3
 ```
 
-This writes startup logs and metrics under `results/raw/javaXX/quarkus/`.
+This writes startup logs and metrics under `results/raw/{profile}/{lane}/javaXX/quarkus/`.
 
 ## 4. Build and run Quarkus app for HTTP benchmarking
 
@@ -192,8 +192,8 @@ java -jar quarkus-app/target/quarkus-app/quarkus-run.jar
 ## 5. Run Quarkus HTTP benchmark scenarios
 
 ```bash
-./scripts/run_quarkus_http_benchmark.sh 21 products
-./scripts/run_quarkus_http_benchmark.sh 21 transform
+BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 products 10s 10
+BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 transform 10s 10
 ```
 
 Optional aggregate concurrency scenario:

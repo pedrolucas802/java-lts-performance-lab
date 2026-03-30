@@ -15,7 +15,7 @@ from observability_common import (
     parse_process_time_to_seconds,
     validate_results_root,
 )
-from result_metadata import iter_track_dirs, scenario_metadata
+from result_metadata import common_run_metadata, iter_track_dirs, scenario_metadata
 
 
 OUTPUT_DIR = Path("results/processed")
@@ -82,11 +82,12 @@ def summarize_cpu_timeline(file_path: Path) -> dict[str, float | int | None]:
 def collect_rows() -> list[dict[str, str | int | float | None]]:
     rows: list[dict[str, str | int | float | None]] = []
 
-    for profile, java_version, gc_dir in iter_track_dirs(RESULTS_ROOT, "gc"):
+    for profile, lane, java_version, gc_dir in iter_track_dirs(RESULTS_ROOT, "gc"):
         for metrics_file in sorted(gc_dir.glob("*-metrics.txt")):
             parsed = parse_key_value_file(metrics_file)
             scenario = parsed.get("scenario", "")
             metadata = scenario_metadata(scenario, "cpu", metrics_file)
+            run_metadata = common_run_metadata(parsed, profile, lane)
 
             cpu_timeline_file = Path(parsed.get("cpu_timeline_file", ""))
             if not cpu_timeline_file.is_absolute():
@@ -104,6 +105,8 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
             cpu_seconds = None
             if start_cpu_time is not None and end_cpu_time is not None and end_cpu_time >= start_cpu_time:
                 cpu_seconds = round(end_cpu_time - start_cpu_time, 3)
+            elif cpu_metrics["samples"] and cpu_metrics["elapsed_seconds"]:
+                cpu_seconds = round((float(cpu_metrics["avg_cpu_percent"]) / 100.0) * float(cpu_metrics["elapsed_seconds"]), 3)
 
             http_reqs = http_metrics.get("http_reqs")
             cpu_per_1k = None
@@ -114,7 +117,14 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
                 {
                     "java_version": java_version,
                     "scenario": metadata["scenario"],
-                    "profile": parsed.get("profile", profile),
+                    "profile": run_metadata["profile"],
+                    "lane": run_metadata["lane"],
+                    "host_os": run_metadata["host_os"],
+                    "container_runtime": run_metadata["container_runtime"],
+                    "cpu_limit": run_metadata["cpu_limit"],
+                    "memory_limit_mb": run_metadata["memory_limit_mb"],
+                    "loadgen_location": run_metadata["loadgen_location"],
+                    "app_location": run_metadata["app_location"],
                     "thread_mode": metadata["thread_mode"],
                     "db_mode": metadata["db_mode"],
                     "run_class": metadata["run_class"],
@@ -141,6 +151,7 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
     rows.sort(
         key=lambda row: (
             str(row["profile"]),
+            str(row["lane"]),
             int(str(row["java_version"])),
             str(row["scenario"]),
         )
@@ -157,6 +168,13 @@ def write_csv(rows: list[dict[str, str | int | float | None]]) -> None:
         "java_version",
         "scenario",
         "profile",
+        "lane",
+        "host_os",
+        "container_runtime",
+        "cpu_limit",
+        "memory_limit_mb",
+        "loadgen_location",
+        "app_location",
         "thread_mode",
         "db_mode",
         "run_class",

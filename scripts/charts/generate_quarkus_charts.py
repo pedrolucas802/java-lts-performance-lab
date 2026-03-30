@@ -184,14 +184,17 @@ def main() -> None:
         with INPUT_CSV.open("r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                lane = row.get("lane", "host") or "host"
                 profile = row.get("profile", "stock") or "stock"
                 java = row["java_version"]
                 scenario = row["scenario"]
-                if profile not in data:
-                    data[profile] = {}
-                if java not in data[profile]:
-                    data[profile][java] = {}
-                data[profile][java][scenario] = {
+                if lane not in data:
+                    data[lane] = {}
+                if profile not in data[lane]:
+                    data[lane][profile] = {}
+                if java not in data[lane][profile]:
+                    data[lane][profile][java] = {}
+                data[lane][profile][java][scenario] = {
                     'reqs_per_sec': float(row["reqs_per_sec"]) if row["reqs_per_sec"] else None,
                     'avg_ms': float(row["avg_ms"]) if row["avg_ms"] else None,
                     'p95_ms': float(row["p95_ms"]) if row["p95_ms"] else None,
@@ -206,37 +209,45 @@ def main() -> None:
         sys.exit(1)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    profiles = sorted(data.keys(), key=lambda name: (name != "stock", name))
-    default_profile = default_profile_name(profiles)
+    lanes = sorted(data.keys(), key=lambda name: (name != "host", name))
     generated_outputs: list[Path] = []
 
-    for profile in profiles:
-        suffix = "" if profile == default_profile else f"-{profile}"
-        profile_data = data[profile]
+    for lane in lanes:
+        profiles = sorted(data[lane].keys(), key=lambda name: (name != "stock", name))
+        default_profile = default_profile_name(profiles)
 
-        throughput_png = OUTPUT_DIR / f"quarkus-throughput-comparison{suffix}.png"
-        try:
-            generate_throughput_chart(profile_data, throughput_png)
-        except Exception as e:
-            print(f"ERROR: Failed to generate throughput chart {throughput_png}: {e}")
-            sys.exit(1)
-        generated_outputs.append(throughput_png)
+        for profile in profiles:
+            suffix_parts = []
+            if lane != "host":
+                suffix_parts.append(lane)
+            if profile != default_profile:
+                suffix_parts.append(profile)
+            suffix = f"-{'-'.join(suffix_parts)}" if suffix_parts else ""
+            profile_data = data[lane][profile]
 
-        latency_png = OUTPUT_DIR / f"quarkus-latency-comparison{suffix}.png"
-        try:
-            generate_latency_chart(profile_data, latency_png)
-        except Exception as e:
-            print(f"ERROR: Failed to generate latency chart {latency_png}: {e}")
-            sys.exit(1)
-        generated_outputs.append(latency_png)
+            throughput_png = OUTPUT_DIR / f"quarkus-throughput-comparison{suffix}.png"
+            try:
+                generate_throughput_chart(profile_data, throughput_png)
+            except Exception as e:
+                print(f"ERROR: Failed to generate throughput chart {throughput_png}: {e}")
+                sys.exit(1)
+            generated_outputs.append(throughput_png)
 
-        failure_rate_png = OUTPUT_DIR / f"quarkus-failure-rate-comparison{suffix}.png"
-        try:
-            generate_failure_rate_chart(profile_data, failure_rate_png)
-        except Exception as e:
-            print(f"ERROR: Failed to generate failure rate chart {failure_rate_png}: {e}")
-            sys.exit(1)
-        generated_outputs.append(failure_rate_png)
+            latency_png = OUTPUT_DIR / f"quarkus-latency-comparison{suffix}.png"
+            try:
+                generate_latency_chart(profile_data, latency_png)
+            except Exception as e:
+                print(f"ERROR: Failed to generate latency chart {latency_png}: {e}")
+                sys.exit(1)
+            generated_outputs.append(latency_png)
+
+            failure_rate_png = OUTPUT_DIR / f"quarkus-failure-rate-comparison{suffix}.png"
+            try:
+                generate_failure_rate_chart(profile_data, failure_rate_png)
+            except Exception as e:
+                print(f"ERROR: Failed to generate failure rate chart {failure_rate_png}: {e}")
+                sys.exit(1)
+            generated_outputs.append(failure_rate_png)
 
     print("SUCCESS: Generated Quarkus charts")
     print(f"  Input CSV: {INPUT_CSV}")

@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-from result_metadata import iter_track_dirs, scenario_metadata
+from result_metadata import common_run_metadata, iter_track_dirs, scenario_metadata
 
 
 # Constants
@@ -66,15 +66,23 @@ def collect_rows() -> list[dict]:
     """Collect all startup result rows."""
     rows: list[dict] = []
 
-    for profile, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
+    for profile, lane, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
         for file_path in sorted(java_dir.glob("startup-java*.txt")):
             parsed = parse_key_value_file(file_path)
             metadata = scenario_metadata(parsed.get("scenario", "startup"), "startup", file_path)
+            run_metadata = common_run_metadata(parsed, profile, lane)
 
             rows.append({
                 "java_version": java_version,
                 "scenario": metadata["scenario"],
-                "profile": parsed.get("profile", profile),
+                "profile": run_metadata["profile"],
+                "lane": run_metadata["lane"],
+                "host_os": run_metadata["host_os"],
+                "container_runtime": run_metadata["container_runtime"],
+                "cpu_limit": run_metadata["cpu_limit"],
+                "memory_limit_mb": run_metadata["memory_limit_mb"],
+                "loadgen_location": run_metadata["loadgen_location"],
+                "app_location": run_metadata["app_location"],
                 "thread_mode": metadata["thread_mode"],
                 "db_mode": metadata["db_mode"],
                 "run_class": metadata["run_class"],
@@ -95,6 +103,13 @@ def write_csv(rows: list[dict], output_file: Path) -> None:
         "java_version",
         "scenario",
         "profile",
+        "lane",
+        "host_os",
+        "container_runtime",
+        "cpu_limit",
+        "memory_limit_mb",
+        "loadgen_location",
+        "app_location",
         "thread_mode",
         "db_mode",
         "run_class",

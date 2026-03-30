@@ -13,9 +13,11 @@ SCENARIO="${2:-products}"
 DURATION="${3:-20s}"
 VUS="${4:-10}"
 BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 
 # Constants
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
+RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT}"
 K6_DIR="${PROJECT_ROOT}/infra/k6"
 PORT="${PORT:-8080}"
 
@@ -46,7 +48,7 @@ Examples:
     $0 21 products 30s 20     # 20 VUs for 30s on products scenario
     $0 17 aggregate 1m 50     # 50 VUs for 1m on aggregate scenario
 
-Requires Quarkus app to be running. Outputs to results/raw/java{JAVA_VERSION}/quarkus/
+Requires Quarkus app to be running. Outputs to results/raw/{profile}/{lane}/java{JAVA_VERSION}/quarkus/
 EOF
 }
 
@@ -93,6 +95,7 @@ echo "INFO: Starting HTTP load test"
 echo "INFO: Java version: ${JAVA_VERSION}"
 echo "INFO: Scenario: ${SCENARIO}"
 echo "INFO: Profile: ${BENCHMARK_PROFILE}"
+echo "INFO: Lane: ${BENCHMARK_LANE}"
 echo "INFO: Duration: ${DURATION}"
 echo "INFO: Virtual users: ${VUS}"
 echo "INFO: Results directory: ${RESULTS_DIR}"
@@ -114,13 +117,35 @@ elif [[ "$SCENARIO" == "aggregate-virtual" ]]; then
     EXTRA_ENV="-e AGG_MODE=virtual"
 fi
 
+SUMMARY_FILE="${RESULTS_DIR}/${SCENARIO}-summary.txt"
+K6_JSON_FILE="${RESULTS_DIR}/${SCENARIO}-k6.json"
+METRICS_FILE="${RESULTS_DIR}/${SCENARIO}-metrics.txt"
+
 k6 run \
-    --out json="${RESULTS_DIR}/${SCENARIO}-k6.json" \
+    --out json="${K6_JSON_FILE}" \
     -e BASE_URL="http://localhost:${PORT}" \
     -e DURATION="${DURATION}" \
     -e VUS="${VUS}" \
     ${EXTRA_ENV} \
-    "${K6_SCRIPT}" | tee "${RESULTS_DIR}/${SCENARIO}-summary.txt"
+    "${K6_SCRIPT}" | tee "${SUMMARY_FILE}"
+
+{
+    echo "java_version=${JAVA_VERSION}"
+    echo "profile=${BENCHMARK_PROFILE}"
+    echo "lane=${BENCHMARK_LANE}"
+    echo "host_os=$(uname -s | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin.*/darwin/; s/linux.*/linux/')"
+    echo "container_runtime=${BENCHMARK_CONTAINER_RUNTIME:-$(if [[ "${BENCHMARK_LANE}" =~ container$ ]]; then echo docker; else echo none; fi)}"
+    echo "cpu_limit=${BENCHMARK_CPU_LIMIT:-unlimited}"
+    echo "memory_limit_mb=${BENCHMARK_MEMORY_LIMIT_MB:-0}"
+    echo "loadgen_location=${BENCHMARK_LOADGEN_LOCATION:-host}"
+    echo "app_location=${BENCHMARK_APP_LOCATION:-host}"
+    echo "scenario=${SCENARIO}"
+    echo "duration=${DURATION}"
+    echo "vus=${VUS}"
+    echo "port=${PORT}"
+    echo "summary_file=${SUMMARY_FILE}"
+    echo "k6_json_file=${K6_JSON_FILE}"
+} > "${METRICS_FILE}"
 
 echo "SUCCESS: HTTP load test completed for Java ${JAVA_VERSION}, scenario ${SCENARIO}"
-echo "INFO: Results written to ${RESULTS_DIR}/${SCENARIO}-summary.txt and ${SCENARIO}-k6.json"
+echo "INFO: Results written to ${SUMMARY_FILE}, ${K6_JSON_FILE}, and ${METRICS_FILE}"

@@ -63,6 +63,14 @@ Current scenarios include:
 - `aggregate-platform` and `aggregate-virtual` concurrency workloads
 - `mixed-workload` as an optional weighted traffic blend
 
+The official Java-version comparison matrix remains fixed to:
+
+- `17-platform`
+- `21-platform`
+- `21-virtual`
+- `25-platform`
+- `25-virtual`
+
 These scenarios allow measurement of:
 
 - throughput
@@ -148,6 +156,7 @@ Implemented:
 - `gc-summary.csv` aggregation from unified GC logs
 - `cpu-summary.csv` aggregation from per-run CPU timelines
 - GC pause comparison charts
+- lane-aware processed outputs with container metadata
 
 ---
 
@@ -241,12 +250,25 @@ Next refinements:
 
 ### Artifacts
 
-- container benchmark notes
-- constrained vs unconstrained comparisons
+- the standard processed summaries enriched with lane metadata
+- lane-specific charts
+- constrained-vs-unconstrained comparison notes
 
 ### Current Progress
 
-Container-based benchmarking is planned for future iterations of the lab.
+Implemented:
+
+- dual execution lanes: `macos-container` and `linux-container`
+- canonical full-runner support for `--lane`
+- lane-aware raw result storage under `results/raw/{profile}/{lane}/javaXX/{track}/`
+- lane-aware processed summaries with `lane`, `host_os`, `container_runtime`, `cpu_limit`, `memory_limit_mb`, `loadgen_location`, and `app_location`
+- lane-specific chart output names so macOS and Linux runs do not collide
+
+Current interpretation policy:
+
+- `stock` is the official profile through M5
+- `macos-container` is valid for development and preliminary same-machine comparisons
+- `linux-container` is the preferred lane for final container-aware and CPU-sensitive claims
 
 ---
 

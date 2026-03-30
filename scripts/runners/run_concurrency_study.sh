@@ -42,10 +42,12 @@ JAVA_VERSION="${1:-21}"
 DURATION="${2:-20s}"
 VUS_LIST="${3:-2,10,25,50}"
 BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
 APP_DIR="quarkus-app"
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
+RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT}"
 RESULTS_DIR="${RESULTS_ROOT}/java${JAVA_VERSION}/concurrency"
 K6_SCRIPT="${PROJECT_ROOT}/infra/k6/aggregate.js"
 PORT="${PORT:-8080}"
@@ -55,6 +57,7 @@ require_command mvn
 require_command java
 require_command curl
 require_command k6
+export BENCHMARK_JAVA_VERSION="${JAVA_VERSION}"
 
 if [[ -z "${BENCHMARK_DATASOURCE_URL:-}" ]]; then
   error "BENCHMARK_DATASOURCE_URL must be set for the DB-backed aggregate workload."
@@ -81,6 +84,7 @@ mkdir -p "${RESULTS_DIR}"
 info "Starting concurrency study"
 info "Java version: ${JAVA_VERSION}"
 info "Profile: ${BENCHMARK_PROFILE}"
+info "Lane: ${BENCHMARK_LANE}"
 info "Duration: ${DURATION}"
 info "VU ramp: ${VUS_LIST}"
 info "Results directory: ${RESULTS_DIR}"
@@ -89,8 +93,8 @@ build_app "${JAVA_VERSION}" "${APP_DIR}"
 JAR_PATH=$(find_jar "${APP_DIR}")
 
 APP_LOG_FILE="${RESULTS_DIR}/app-concurrency-java${JAVA_VERSION}.log"
-APP_PID=$(start_app "${JAR_PATH}" "${APP_LOG_FILE}" "${APP_JVM_OPTS}" "${PORT}")
-trap "cleanup_app ${APP_PID}" EXIT
+APP_ID=$(start_app "${JAR_PATH}" "${APP_LOG_FILE}" "${APP_JVM_OPTS}" "${PORT}")
+trap "cleanup_app ${APP_ID}" EXIT
 
 wait_for_health "${PORT}" 60
 
@@ -121,6 +125,13 @@ for vus in "${VUS_VALUES[@]}"; do
     {
       echo "java_version=${JAVA_VERSION}"
       echo "profile=${BENCHMARK_PROFILE}"
+      echo "lane=${BENCHMARK_LANE}"
+      echo "host_os=$(benchmark_host_os)"
+      echo "container_runtime=$(benchmark_container_runtime)"
+      echo "cpu_limit=$(benchmark_cpu_limit)"
+      echo "memory_limit_mb=$(benchmark_memory_limit_mb)"
+      echo "loadgen_location=$(benchmark_loadgen_location)"
+      echo "app_location=$(benchmark_app_location)"
       echo "scenario=${scenario}"
       echo "thread_mode=${mode}"
       echo "db_mode=jdbc"

@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-from result_metadata import iter_track_dirs, scenario_metadata
+from result_metadata import common_run_metadata, iter_track_dirs, scenario_metadata
 
 RESULTS_ROOT = Path("results/raw")
 OUTPUT_DIR = Path("results/processed")
@@ -85,11 +85,12 @@ def parse_summary_file(file_path: Path) -> dict[str, float | int | None]:
 def collect_rows() -> list[dict[str, str | int | float | None]]:
     rows: list[dict[str, str | int | float | None]] = []
 
-    for profile, java_version, concurrency_dir in iter_track_dirs(RESULTS_ROOT, "concurrency"):
+    for profile, lane, java_version, concurrency_dir in iter_track_dirs(RESULTS_ROOT, "concurrency"):
         for metrics_file in sorted(concurrency_dir.glob("*-metrics.txt")):
             parsed = parse_key_value_file(metrics_file)
             scenario = parsed.get("scenario", "")
             metadata = scenario_metadata(scenario, parsed.get("run_class", "concurrency"), metrics_file)
+            run_metadata = common_run_metadata(parsed, profile, lane)
 
             summary_file = Path(parsed.get("summary_file", metrics_file.name.replace("-metrics.txt", "-summary.txt")))
             if not summary_file.is_absolute():
@@ -102,7 +103,14 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
             rows.append({
                 "java_version": java_version,
                 "scenario": metadata["scenario"],
-                "profile": parsed.get("profile", profile),
+                "profile": run_metadata["profile"],
+                "lane": run_metadata["lane"],
+                "host_os": run_metadata["host_os"],
+                "container_runtime": run_metadata["container_runtime"],
+                "cpu_limit": run_metadata["cpu_limit"],
+                "memory_limit_mb": run_metadata["memory_limit_mb"],
+                "loadgen_location": run_metadata["loadgen_location"],
+                "app_location": run_metadata["app_location"],
                 "thread_mode": parsed.get("thread_mode", metadata["thread_mode"]),
                 "db_mode": parsed.get("db_mode", metadata["db_mode"]),
                 "run_class": parsed.get("run_class", metadata["run_class"]),
@@ -122,6 +130,7 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
     rows.sort(
         key=lambda row: (
             str(row["profile"]),
+            str(row["lane"]),
             int(str(row["java_version"])),
             int(str(row["vus"])),
             str(row["scenario"]),
@@ -139,6 +148,13 @@ def write_csv(rows: list[dict[str, str | int | float | None]]) -> None:
         "java_version",
         "scenario",
         "profile",
+        "lane",
+        "host_os",
+        "container_runtime",
+        "cpu_limit",
+        "memory_limit_mb",
+        "loadgen_location",
+        "app_location",
         "thread_mode",
         "db_mode",
         "run_class",

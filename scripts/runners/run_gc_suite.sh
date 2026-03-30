@@ -8,13 +8,15 @@ JAVA_VERSION="${1:-21}"
 DURATION="${2:-20s}"
 VUS="${3:-10}"
 BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 PORT="${PORT:-8082}"
 CPU_SAMPLE_INTERVAL_SECONDS="${CPU_SAMPLE_INTERVAL_SECONDS:-1}"
 GC_SCENARIOS="${GC_SCENARIOS:-}"
 
 APP_DIR="quarkus-app"
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
+RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT}"
 K6_DIR="${PROJECT_ROOT}/infra/k6"
 RESULTS_DIR="${RESULTS_ROOT}/java${JAVA_VERSION}/gc"
 
@@ -53,6 +55,7 @@ fi
 cd "${PROJECT_ROOT}"
 
 source "${PROJECT_ROOT}/scripts/common.sh"
+export BENCHMARK_JAVA_VERSION="${JAVA_VERSION}"
 
 cleanup_suite() {
     if [[ -n "${SCRIPT_SAMPLER_PID}" ]] && kill -0 "${SCRIPT_SAMPLER_PID}" >/dev/null 2>&1; then
@@ -69,24 +72,8 @@ cleanup_suite() {
 
 trap cleanup_suite EXIT
 
-capture_process_snapshot() {
-    local app_pid=$1
-    local snapshot
-
-    if ! ps -p "${app_pid}" >/dev/null 2>&1; then
-        return 1
-    fi
-
-    snapshot=$(ps -p "${app_pid}" -o %cpu= -o rss= -o time= | awk 'NF {print $1","$2","$3; exit}')
-    if [[ -z "${snapshot}" ]]; then
-        return 1
-    fi
-
-    echo "${snapshot}"
-}
-
 start_cpu_sampler() {
-    local app_pid=$1
+    local app_id=$1
     local timeline_file=$2
     local interval=$3
 
@@ -97,7 +84,7 @@ start_cpu_sampler() {
         start_epoch=$(date +%s)
 
         while true; do
-            if ! snapshot=$(capture_process_snapshot "${app_pid}"); then
+            if ! snapshot=$(get_app_snapshot "${app_id}"); then
                 break
             fi
 
@@ -174,6 +161,7 @@ done
 info "Starting GC / JFR / CPU observability suite"
 info "Java version: ${JAVA_VERSION}"
 info "Profile: ${BENCHMARK_PROFILE}"
+info "Lane: ${BENCHMARK_LANE}"
 info "Duration: ${DURATION}"
 info "Virtual users: ${VUS}"
 info "Port: ${PORT}"
@@ -227,10 +215,10 @@ for SCENARIO in "${SCENARIOS[@]}"; do
 
     info "Starting observability scenario: ${SCENARIO}"
     SCRIPT_APP_PID=$(start_app "${JAR_PATH}" "${APP_LOG_FILE}" "${JVM_OPTS}" "${PORT}")
-    APP_PID_FOR_RUN="${SCRIPT_APP_PID}"
+    APP_ID_FOR_RUN="${SCRIPT_APP_PID}"
     wait_for_health "${PORT}" 60
 
-    START_SNAPSHOT="$(capture_process_snapshot "${SCRIPT_APP_PID}" || true)"
+    START_SNAPSHOT="$(get_app_snapshot "${SCRIPT_APP_PID}" || true)"
     START_CPU_PERCENT=""
     START_RSS_KB=""
     START_CPU_TIME=""
@@ -266,7 +254,7 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     stop_cpu_sampler "${SCRIPT_SAMPLER_PID}"
     SCRIPT_SAMPLER_PID=""
 
-    END_SNAPSHOT="$(capture_process_snapshot "${SCRIPT_APP_PID}" || true)"
+    END_SNAPSHOT="$(get_app_snapshot "${SCRIPT_APP_PID}" || true)"
     END_CPU_PERCENT=""
     END_RSS_KB=""
     END_CPU_TIME=""
@@ -288,11 +276,18 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     {
         echo "java_version=${JAVA_VERSION}"
         echo "profile=${BENCHMARK_PROFILE}"
+        echo "lane=${BENCHMARK_LANE}"
+        echo "host_os=$(benchmark_host_os)"
+        echo "container_runtime=$(benchmark_container_runtime)"
+        echo "cpu_limit=$(benchmark_cpu_limit)"
+        echo "memory_limit_mb=$(benchmark_memory_limit_mb)"
+        echo "loadgen_location=$(benchmark_loadgen_location)"
+        echo "app_location=$(benchmark_app_location)"
         echo "scenario=${SCENARIO}"
         echo "duration=${DURATION}"
         echo "vus=${VUS}"
         echo "port=${PORT}"
-        echo "pid=${APP_PID_FOR_RUN}"
+        echo "pid=${APP_ID_FOR_RUN}"
         echo "start_cpu_percent=${START_CPU_PERCENT}"
         echo "start_rss_kb=${START_RSS_KB}"
         echo "start_cpu_time=${START_CPU_TIME}"

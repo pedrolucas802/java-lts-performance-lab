@@ -12,11 +12,13 @@ COMMON_SH="${PROJECT_ROOT}/scripts/common.sh"
 JAVA_VERSION="${1:-21}"
 REPETITIONS="${2:-1}"
 BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
 # Constants
 APP_DIR="quarkus-app"
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
+RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT}"
 PORT="${PORT:-8080}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-60}"
 
@@ -38,7 +40,7 @@ Examples:
     $0 21 3
     $0 17 5
 
-Outputs results to: results/raw/java{JAVA_VERSION}/quarkus/startup-java{JAVA_VERSION}-run*.txt
+Outputs results to: results/raw/{profile}/{lane}/java{JAVA_VERSION}/quarkus/startup-java{JAVA_VERSION}-run*.txt
 EOF
 }
 
@@ -63,11 +65,13 @@ echo "INFO: Starting Quarkus startup benchmark"
 echo "INFO: Java version: ${JAVA_VERSION}"
 echo "INFO: Repetitions: ${REPETITIONS}"
 echo "INFO: Profile: ${BENCHMARK_PROFILE}"
+echo "INFO: Lane: ${BENCHMARK_LANE}"
 echo "INFO: Results directory: ${RESULTS_DIR}"
 
 # Source common functions
 # shellcheck source=/dev/null
 source "${COMMON_SH}"
+export BENCHMARK_JAVA_VERSION="${JAVA_VERSION}"
 
 validate_java_version "${JAVA_VERSION}"
 require_command mvn
@@ -151,6 +155,13 @@ run_startup_benchmark() {
     {
         echo "java_version=${JAVA_VERSION}"
         echo "profile=${BENCHMARK_PROFILE}"
+        echo "lane=${BENCHMARK_LANE}"
+        echo "host_os=$(benchmark_host_os)"
+        echo "container_runtime=$(benchmark_container_runtime)"
+        echo "cpu_limit=$(benchmark_cpu_limit)"
+        echo "memory_limit_mb=$(benchmark_memory_limit_mb)"
+        echo "loadgen_location=$(benchmark_loadgen_location)"
+        echo "app_location=$(benchmark_app_location)"
         echo "scenario=startup"
         echo "run_number=${run_num}"
         echo "external_startup_ms=${external_startup_ms}"

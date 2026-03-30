@@ -29,13 +29,16 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
 fi
 
 JAVA_VERSION="${1:-21}"
+BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 validate_java_version "${JAVA_VERSION}"
 require_command mvn
 require_command java
 
 cd "${PROJECT_ROOT}"
 
-RESULTS_DIR="results/raw/java${JAVA_VERSION}/jmh"
+RESULTS_DIR="${BENCHMARK_RESULTS_ROOT}/java${JAVA_VERSION}/jmh"
 mkdir -p "${RESULTS_DIR}"
 
 info "Running JMH suite for Java ${JAVA_VERSION}"

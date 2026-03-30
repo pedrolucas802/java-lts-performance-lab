@@ -62,12 +62,15 @@ Typical configuration includes:
 - default garbage collector for the JDK
 - consistent heap settings when applicable
 - identical Quarkus application configuration
+- `stock` profile as the official publication path through M5
 
 Future experiments may introduce controlled variations such as:
 
 - explicit GC selection
 - container memory limits
 - additional JFR profiling flags
+
+The profile system remains in the repo for later work, but `tuned` runs are deferred to M6 so the current benchmark story stays centered on raw Java-version behavior.
 
 The current observability suite adds:
 
@@ -132,6 +135,18 @@ Benchmark results are interpreted using three confidence levels:
 
 Current macOS local runs are valid for development and preliminary comparisons, but container-aware and low-level CPU conclusions should wait for the isolated lane.
 
+## Lane Model
+
+The harness supports two named execution lanes:
+
+- `macos-container` for local comparative runs where the app executes in Docker and the load generator stays on the host
+- `linux-container` for higher-confidence container-aware runs intended for Linux hosts
+
+Through M5, the official comparison path is `stock` plus an explicit lane. The recommended publication order is:
+
+- `stock` on `macos-container` for development and early comparisons
+- `stock` on `linux-container` for final container-aware claims
+
 ---
 
 # Analysis Pipeline
@@ -140,13 +155,14 @@ Current macOS local runs are valid for development and preliminary comparisons, 
 
 Raw benchmark data is stored under:
 
-results/raw/
+`results/raw/{profile}/{lane}/javaXX/{track}/`
 
 Each benchmark run records:
 
 - raw performance metrics
 - logs (when applicable)
 - JVM runtime data
+- lane metadata such as container runtime, CPU limit, memory limit, app location, and load-generator location
 
 ---
 

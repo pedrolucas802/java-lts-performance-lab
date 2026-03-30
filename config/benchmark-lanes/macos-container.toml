@@ -1,0 +1,7 @@
+lane = "macos-container"
+description = "Local comparative Docker lane on macOS."
+container_runtime = "docker"
+cpu_limit = "2"
+memory_limit_mb = "2048"
+loadgen_location = "host"
+app_location = "container"

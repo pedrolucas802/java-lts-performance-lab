@@ -2,6 +2,7 @@
 
 JAVA_VERSION ?= 21
 PROFILE ?= stock
+LANE ?=
 INCLUDE_MIXED ?= false
 
 help:
@@ -14,6 +15,12 @@ help:
 	@echo "  make charts"
 	@echo "  make full-lab"
 	@echo "  make clean"
+	@echo ""
+	@echo "Variables:"
+	@echo "  JAVA_VERSION=21"
+	@echo "  PROFILE=stock"
+	@echo "  LANE=macos-container|linux-container"
+	@echo "  INCLUDE_MIXED=true|false"
 
 jmh:
 	bash scripts/runners/run_jmh_suite.sh $(JAVA_VERSION)
@@ -47,4 +54,4 @@ aggregate:
 	python3 scripts/aggregators/aggregate_jfr_results.py
 
 full-lab:
-	python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile $(PROFILE) $(if $(filter true,$(INCLUDE_MIXED)),--include-mixed-workload,)
+	python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile $(PROFILE) $(if $(LANE),--lane $(LANE),) $(if $(filter true,$(INCLUDE_MIXED)),--include-mixed-workload,)

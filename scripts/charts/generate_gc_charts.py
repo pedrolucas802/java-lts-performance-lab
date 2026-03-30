@@ -109,33 +109,42 @@ def main() -> None:
         sys.exit(1)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    profiles = sorted({row.get("profile", "stock") or "stock" for row in rows}, key=lambda name: (name != "stock", name))
-    default_profile = default_profile_name(profiles)
+    lanes = sorted({row.get("lane", "host") or "host" for row in rows}, key=lambda name: (name != "host", name))
     outputs: list[Path] = []
 
-    for profile in profiles:
-        suffix = "" if profile == default_profile else f"-{profile}"
-        profile_rows = [row for row in rows if (row.get("profile", "stock") or "stock") == profile]
+    for lane in lanes:
+        lane_rows = [row for row in rows if (row.get("lane", "host") or "host") == lane]
+        profiles = sorted({row.get("profile", "stock") or "stock" for row in lane_rows}, key=lambda name: (name != "stock", name))
+        default_profile = default_profile_name(profiles)
 
-        total_pause_png = OUTPUT_DIR / f"gc-total-pause-comparison{suffix}.png"
-        generate_metric_chart(
-            profile_rows,
-            "total_pause_ms",
-            "Total GC pause (ms)",
-            f"Total GC Pause by Java Version and Scenario ({profile})",
-            total_pause_png,
-        )
-        outputs.append(total_pause_png)
+        for profile in profiles:
+            suffix_parts = []
+            if lane != "host":
+                suffix_parts.append(lane)
+            if profile != default_profile:
+                suffix_parts.append(profile)
+            suffix = f"-{'-'.join(suffix_parts)}" if suffix_parts else ""
+            profile_rows = [row for row in lane_rows if (row.get("profile", "stock") or "stock") == profile]
 
-        max_pause_png = OUTPUT_DIR / f"gc-max-pause-comparison{suffix}.png"
-        generate_metric_chart(
-            profile_rows,
-            "max_pause_ms",
-            "Max GC pause (ms)",
-            f"Max GC Pause by Java Version and Scenario ({profile})",
-            max_pause_png,
-        )
-        outputs.append(max_pause_png)
+            total_pause_png = OUTPUT_DIR / f"gc-total-pause-comparison{suffix}.png"
+            generate_metric_chart(
+                profile_rows,
+                "total_pause_ms",
+                "Total GC pause (ms)",
+                f"Total GC Pause by Java Version and Scenario ({lane}, {profile})",
+                total_pause_png,
+            )
+            outputs.append(total_pause_png)
+
+            max_pause_png = OUTPUT_DIR / f"gc-max-pause-comparison{suffix}.png"
+            generate_metric_chart(
+                profile_rows,
+                "max_pause_ms",
+                "Max GC pause (ms)",
+                f"Max GC Pause by Java Version and Scenario ({lane}, {profile})",
+                max_pause_png,
+            )
+            outputs.append(max_pause_png)
 
     print("SUCCESS: Generated GC charts")
     print(f"  Input CSV: {INPUT_CSV}")

@@ -44,6 +44,7 @@ AGGREGATORS_DIR = PROJECT_ROOT / "scripts" / "aggregators"
 CHARTS_DIR = PROJECT_ROOT / "scripts" / "charts"
 LOGS_DIR = PROJECT_ROOT / "results" / "logs"
 PROFILE_CONFIGS_DIR = PROJECT_ROOT / "config" / "benchmark-profiles"
+LANE_CONFIGS_DIR = PROJECT_ROOT / "config" / "benchmark-lanes"
 
 RICH_CONSOLE = Console() if HAS_RICH else None
 
@@ -62,6 +63,17 @@ class BenchmarkProfile:
     @property
     def app_jvm_opts_string(self) -> str:
         return " ".join(self.app_jvm_opts)
+
+
+@dataclass(frozen=True)
+class BenchmarkLane:
+    name: str
+    description: str
+    container_runtime: str
+    cpu_limit: str
+    memory_limit_mb: str
+    loadgen_location: str
+    app_location: str
 
 
 class RunLogger:
@@ -135,6 +147,34 @@ def sanitize_message(message: str, limit: int = 72) -> str:
     return clean
 
 
+def resolve_java_home(version: str) -> str:
+    explicit_home = os.environ.get(f"JAVA{version}_HOME")
+    if explicit_home:
+        return explicit_home
+
+    if os.environ.get("JAVA_HOME"):
+        current_java_home = os.environ["JAVA_HOME"]
+        current_java = Path(current_java_home) / "bin" / "java"
+        if current_java.exists():
+            result = subprocess.run(
+                [str(current_java), "-version"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            version_text = (result.stdout or "") + "\n" + (result.stderr or "")
+            if f"version \"{version}." in version_text or f" {version}" in version_text:
+                return current_java_home
+
+    if sys.platform == "darwin":
+        return macos_java_home(version)
+
+    raise RuntimeError(
+        f"Could not resolve JAVA_HOME for Java {version}. "
+        f"Set JAVA{version}_HOME or JAVA_HOME before running."
+    )
+
+
 def macos_java_home(version: str) -> str:
     result = subprocess.run(
         ["/usr/libexec/java_home", "-v", version],
@@ -151,7 +191,7 @@ def macos_java_home(version: str) -> str:
 
 def build_env(java_version: str) -> dict[str, str]:
     env = os.environ.copy()
-    java_home = macos_java_home(java_version)
+    java_home = resolve_java_home(java_version)
     env["JAVA_HOME"] = java_home
     env["PATH"] = f"{java_home}/bin:{env.get('PATH', '')}"
     return env
@@ -177,14 +217,41 @@ def load_profile_config(java_version: str, profile_name: str) -> BenchmarkProfil
     )
 
 
+def load_lane_config(lane_name: str) -> BenchmarkLane:
+    lane_path = LANE_CONFIGS_DIR / f"{lane_name}.toml"
+    if not lane_path.exists():
+        raise FileNotFoundError(f"Missing lane config: {lane_path}")
+
+    data = tomllib.loads(lane_path.read_text(encoding="utf-8"))
+    return BenchmarkLane(
+        name=str(data.get("lane", lane_name)),
+        description=str(data.get("description", "")),
+        container_runtime=str(data.get("container_runtime", "none")),
+        cpu_limit=str(data.get("cpu_limit", "unlimited")),
+        memory_limit_mb=str(data.get("memory_limit_mb", "0")),
+        loadgen_location=str(data.get("loadgen_location", "host")),
+        app_location=str(data.get("app_location", "host")),
+    )
+
+
 def build_runtime_env(
         java_version: str,
         profile: BenchmarkProfile,
+        lane: BenchmarkLane,
         extra_env: dict[str, str] | None = None,
 ) -> dict[str, str]:
     env = build_env(java_version)
     env.update(profile.app_env)
     env["BENCHMARK_PROFILE"] = profile.name
+    env["BENCHMARK_LANE"] = lane.name
+    env["BENCHMARK_RESULTS_ROOT"] = str(PROJECT_ROOT / "results" / "raw" / profile.name / lane.name)
+    env["BENCHMARK_CONTAINER_RUNTIME"] = lane.container_runtime
+    env["BENCHMARK_CPU_LIMIT"] = lane.cpu_limit
+    env["BENCHMARK_MEMORY_LIMIT_MB"] = lane.memory_limit_mb
+    env["BENCHMARK_LOADGEN_LOCATION"] = lane.loadgen_location
+    env["BENCHMARK_APP_LOCATION"] = lane.app_location
+    env["BENCHMARK_HOST_OS"] = sys.platform
+    env["BENCHMARK_JAVA_VERSION"] = java_version
     env["APP_JVM_OPTS"] = profile.app_jvm_opts_string
     if extra_env:
         env.update(extra_env)
@@ -341,6 +408,7 @@ def find_quarkus_jar() -> Path:
 def start_quarkus_app(
         java_version: str,
         profile: BenchmarkProfile,
+        lane: BenchmarkLane,
         port: int,
         *,
         progress: Progress | None = None,
@@ -348,7 +416,7 @@ def start_quarkus_app(
         completed_tasks: int = 0,
         total_tasks: int = 0,
 ) -> tuple[subprocess.Popen[str], TextIO, Path]:
-    env = build_runtime_env(java_version, profile, {"PORT": str(port)})
+    env = build_runtime_env(java_version, profile, lane, {"PORT": str(port)})
 
     run_command(
         [
@@ -423,18 +491,15 @@ def stop_process(process: subprocess.Popen[str], log_handle: TextIO | None = Non
         log_handle.close()
 
 
-def validate_tools(*, include_gc: bool) -> None:
+def validate_tools(*, include_gc: bool, lane: str) -> None:
     required = ["bash", "python3", "mvn", "k6"]
     if include_gc:
         required.append("jfr")
+    if lane.endswith("container"):
+        required.append("docker")
     missing = [tool for tool in required if which(tool) is None]
     if missing:
         raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
-
-    if sys.platform != "darwin":
-        raise RuntimeError(
-            "This script currently assumes macOS because it uses /usr/libexec/java_home."
-        )
 
 
 def scenarios_for_version(java_version: str, include_mixed_workload: bool) -> tuple[list[str], list[str]]:
@@ -509,6 +574,10 @@ def create_run_logger() -> tuple[RunLogger, str, Path]:
     logger.write_line(f"Python: {sys.executable}")
     logger.write_line()
     return logger, run_timestamp, log_path
+
+
+def default_lane_name() -> str:
+    return "macos-container" if sys.platform == "darwin" else "linux-container"
 
 
 def main() -> int:
@@ -613,6 +682,12 @@ def main() -> int:
         help="Benchmark profile config to use for app-based runs. Default: stock",
     )
     parser.add_argument(
+        "--lane",
+        choices=["macos-container", "linux-container"],
+        default=default_lane_name(),
+        help="Execution lane for app-based runs. Default is macos-container on macOS and linux-container elsewhere.",
+    )
+    parser.add_argument(
         "--include-mixed-workload",
         action="store_true",
         help="Also run the weighted mixed-workload HTTP scenario.",
@@ -625,12 +700,14 @@ def main() -> int:
 
     try:
         info(f"Run log file: {log_path}", force_console=True)
-        validate_tools(include_gc=args.with_gc_suite)
+        validate_tools(include_gc=args.with_gc_suite, lane=args.lane)
 
         versions = [str(v) for v in args.versions]
         for version in versions:
             if version not in {"17", "21", "25"}:
                 raise RuntimeError(f"Unsupported Java version: {version}")
+
+        lane = load_lane_config(args.lane)
 
         all_tasks = task_plan(
             versions,
@@ -643,6 +720,8 @@ def main() -> int:
         logger.section("RUN CONFIGURATION")
         logger.write_line(f"Versions: {', '.join(versions)}")
         logger.write_line(f"Profile: {args.profile}")
+        logger.write_line(f"Lane: {lane.name}")
+        logger.write_line(f"Lane description: {lane.description}")
         logger.write_line(f"Startup repetitions: {args.startup_repetitions}")
         logger.write_line(f"HTTP duration: {args.http_duration}")
         logger.write_line(f"HTTP VUs: {args.http_vus}")
@@ -704,8 +783,7 @@ def main() -> int:
 
             for version in versions:
                 profile = load_profile_config(version, args.profile)
-                env = build_env(version)
-                runtime_env = build_runtime_env(version, profile)
+                runtime_env = build_runtime_env(version, profile, lane)
                 http_scenarios, memory_scenarios = scenarios_for_version(version, args.include_mixed_workload)
 
                 requires_database = any(
@@ -724,7 +802,7 @@ def main() -> int:
                 if not args.skip_jmh:
                     run_command(
                         ["bash", str(RUNNERS_DIR / "run_jmh_suite.sh"), version],
-                        env=env,
+                        env=runtime_env,
                         label=f"JMH microbenchmarks for Java {version}",
                         progress=progress,
                         task_id=task_id,
@@ -733,7 +811,7 @@ def main() -> int:
                     )
                     step(f"JMH Java {version}")
 
-                startup_env = build_runtime_env(version, profile, {"PORT": str(args.port)})
+                startup_env = build_runtime_env(version, profile, lane, {"PORT": str(args.port)})
                 run_command(
                     [
                         "bash",
@@ -750,39 +828,22 @@ def main() -> int:
                 )
                 step(f"Startup Java {version}")
 
-                process: subprocess.Popen[str] | None = None
-                app_log_handle: TextIO | None = None
-                try:
-                    process, app_log_handle, _ = start_quarkus_app(
+                run_command(
+                    [
+                        "bash",
+                        str(RUNNERS_DIR / "run_quarkus_suite.sh"),
                         version,
-                        profile,
-                        args.port,
-                        progress=progress,
-                        task_id=task_id,
-                        completed_tasks=completed_tasks,
-                        total_tasks=total_tasks,
-                    )
-
-                    for scenario in http_scenarios:
-                        run_command(
-                            [
-                                "bash",
-                                str(RUNNERS_DIR / "run_quarkus_http_benchmark.sh"),
-                                version,
-                                scenario,
-                                args.http_duration,
-                                str(args.http_vus),
-                            ],
-                            env=build_runtime_env(version, profile, {"PORT": str(args.port)}),
-                            label=f"HTTP {scenario} on Java {version} ({profile.name})",
-                            progress=progress,
-                            task_id=task_id,
-                            completed_tasks=completed_tasks,
-                            total_tasks=total_tasks,
-                        )
-                finally:
-                    if process is not None:
-                        stop_process(process, app_log_handle)
+                        args.http_duration,
+                        str(args.http_vus),
+                        ",".join(http_scenarios),
+                    ],
+                    env=build_runtime_env(version, profile, lane, {"PORT": str(args.port)}),
+                    label=f"HTTP suite for Java {version} ({profile.name}, {lane.name})",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
 
                 step(f"HTTP suite Java {version}")
 
@@ -794,7 +855,7 @@ def main() -> int:
                         args.concurrency_duration,
                         args.concurrency_vus_list,
                     ],
-                    env=build_runtime_env(version, profile, {"PORT": str(args.port)}),
+                    env=build_runtime_env(version, profile, lane, {"PORT": str(args.port)}),
                     label=f"Concurrency study for Java {version} ({profile.name})",
                     progress=progress,
                     task_id=task_id,
@@ -807,6 +868,7 @@ def main() -> int:
                     mem_env = build_runtime_env(
                         version,
                         profile,
+                        lane,
                         {
                             "PORT": str(args.memory_port),
                             "DURATION": args.memory_duration,
@@ -842,7 +904,7 @@ def main() -> int:
                             args.gc_duration,
                             str(args.gc_vus),
                         ],
-                        env=build_runtime_env(version, profile, {"PORT": str(args.gc_port)}),
+                        env=build_runtime_env(version, profile, lane, {"PORT": str(args.gc_port)}),
                         label=f"GC/JFR/CPU suite for Java {version} ({profile.name})",
                         progress=progress,
                         task_id=task_id,

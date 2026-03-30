@@ -1,0 +1,7 @@
+lane = "linux-container"
+description = "Higher-confidence Docker lane intended for Linux hosts."
+container_runtime = "docker"
+cpu_limit = "2"
+memory_limit_mb = "2048"
+loadgen_location = "host"
+app_location = "container"

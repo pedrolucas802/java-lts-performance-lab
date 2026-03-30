@@ -15,7 +15,7 @@ from observability_common import (
     parse_key_value_file,
     validate_results_root,
 )
-from result_metadata import iter_track_dirs, scenario_metadata
+from result_metadata import common_run_metadata, iter_track_dirs, scenario_metadata
 
 
 OUTPUT_DIR = Path("results/processed")
@@ -108,11 +108,12 @@ def parse_gc_log(file_path: Path) -> dict[str, float | int]:
 def collect_rows() -> list[dict[str, str | int | float | None]]:
     rows: list[dict[str, str | int | float | None]] = []
 
-    for profile, java_version, gc_dir in iter_track_dirs(RESULTS_ROOT, "gc"):
+    for profile, lane, java_version, gc_dir in iter_track_dirs(RESULTS_ROOT, "gc"):
         for metrics_file in sorted(gc_dir.glob("*-metrics.txt")):
             parsed = parse_key_value_file(metrics_file)
             scenario = parsed.get("scenario", "")
             metadata = scenario_metadata(scenario, "gc", metrics_file)
+            run_metadata = common_run_metadata(parsed, profile, lane)
 
             gc_log_file = Path(parsed.get("gc_log_file", ""))
             if not gc_log_file.is_absolute():
@@ -129,7 +130,14 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
                 {
                     "java_version": java_version,
                     "scenario": metadata["scenario"],
-                    "profile": parsed.get("profile", profile),
+                    "profile": run_metadata["profile"],
+                    "lane": run_metadata["lane"],
+                    "host_os": run_metadata["host_os"],
+                    "container_runtime": run_metadata["container_runtime"],
+                    "cpu_limit": run_metadata["cpu_limit"],
+                    "memory_limit_mb": run_metadata["memory_limit_mb"],
+                    "loadgen_location": run_metadata["loadgen_location"],
+                    "app_location": run_metadata["app_location"],
                     "thread_mode": metadata["thread_mode"],
                     "db_mode": metadata["db_mode"],
                     "run_class": metadata["run_class"],
@@ -158,6 +166,7 @@ def collect_rows() -> list[dict[str, str | int | float | None]]:
     rows.sort(
         key=lambda row: (
             str(row["profile"]),
+            str(row["lane"]),
             int(str(row["java_version"])),
             str(row["scenario"]),
         )
@@ -174,6 +183,13 @@ def write_csv(rows: list[dict[str, str | int | float | None]]) -> None:
         "java_version",
         "scenario",
         "profile",
+        "lane",
+        "host_os",
+        "container_runtime",
+        "cpu_limit",
+        "memory_limit_mb",
+        "loadgen_location",
+        "app_location",
         "thread_mode",
         "db_mode",
         "run_class",

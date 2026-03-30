@@ -25,7 +25,7 @@ This is a performance engineering lab comparing Java 17, 21, and 25 LTS releases
 
 ## Project Conventions
 - **Java version targeting**: Use `-Djava.release=17/21/25` for Maven builds; overrides default in root POM
-- **Result organization**: Raw outputs in `results/raw/javaXX/` subdirs (quarkus/, jmh/, gc/, jfr/); processed data in `results/processed/`
+- **Result organization**: Raw outputs in `results/raw/{profile}/{lane}/javaXX/` subdirs (quarkus/, jmh/, gc/, jfr/); processed data in `results/processed/`
 - **Benchmark tracks**: Five experiment categories (A: startup/warmup, B: memory/GC, C: concurrency/IO, D: JFR observability, E: containers) - see `docs/benchmark-matrix.md`
 - **Quarkus config**: Native image disabled; focuses on JVM runtime performance
 - **Load testing**: K6 scenarios simulate realistic traffic patterns with warmup phases
@@ -44,7 +44,7 @@ This is a performance engineering lab comparing Java 17, 21, and 25 LTS releases
 - **JMH** for microbenchmarking with custom state objects
 - **Python scripts** for data aggregation (no virtual env required)
 - **Eclipse Temurin JDKs** for Java 17/21/25 consistency
-- **macOS ARM64** (Apple Silicon) for current runs; container support planned
+- **macOS ARM64** (Apple Silicon) for current development runs; lane-aware container support exists through `macos-container` and `linux-container`
 
 ## Common Patterns
 - **Endpoint injection**: Quarkus resources inject CDI services (e.g., `ProductService` for data generation)

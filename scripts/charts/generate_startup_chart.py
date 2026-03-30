@@ -41,34 +41,49 @@ def main() -> int:
 
     OUTPUT_PNG.parent.mkdir(parents=True, exist_ok=True)
     profile_column = "profile" if "profile" in df.columns else None
+    lane_column = "lane" if "lane" in df.columns else None
     profiles = (
         sorted(df[profile_column].dropna().unique(), key=lambda name: (name != "stock", name))
         if profile_column else ["stock"]
     )
+    lanes = (
+        sorted(df[lane_column].dropna().unique(), key=lambda name: (name != "host", name))
+        if lane_column else ["host"]
+    )
     default_profile = "stock" if "stock" in profiles else profiles[0]
+    default_lane = "host" if "host" in lanes else lanes[0]
 
     generated_outputs = []
-    for profile in profiles:
-        profile_df = df if profile_column is None else df[df[profile_column] == profile]
-        grouped = (
-            profile_df.groupby("java_version", as_index=False)["external_startup_ms"]
-            .mean()
-            .sort_values("java_version")
-        )
+    for lane in lanes:
+        lane_df = df if lane_column is None else df[df[lane_column] == lane]
+        for profile in profiles:
+            profile_df = lane_df if profile_column is None else lane_df[lane_df[profile_column] == profile]
+            if profile_df.empty:
+                continue
 
-        output_png = OUTPUT_PNG if profile == default_profile else OUTPUT_PNG.with_name(
-            f"{OUTPUT_PNG.stem}-{profile}{OUTPUT_PNG.suffix}"
-        )
+            grouped = (
+                profile_df.groupby("java_version", as_index=False)["external_startup_ms"]
+                .mean()
+                .sort_values("java_version")
+            )
 
-        plt.figure(figsize=(8, 5))
-        plt.bar(grouped["java_version"].astype(str), grouped["external_startup_ms"])
-        plt.xlabel("Java Version")
-        plt.ylabel("External Startup Time (ms)")
-        plt.title(f"Quarkus Startup Comparison ({profile})")
-        plt.tight_layout()
-        plt.savefig(output_png, dpi=200)
-        plt.close()
-        generated_outputs.append(output_png)
+            suffix_parts = []
+            if lane != "host":
+                suffix_parts.append(lane)
+            if profile != default_profile:
+                suffix_parts.append(profile)
+            suffix = f"-{'-'.join(suffix_parts)}" if suffix_parts else ""
+            output_png = OUTPUT_PNG.with_name(f"{OUTPUT_PNG.stem}{suffix}{OUTPUT_PNG.suffix}")
+
+            plt.figure(figsize=(8, 5))
+            plt.bar(grouped["java_version"].astype(str), grouped["external_startup_ms"])
+            plt.xlabel("Java Version")
+            plt.ylabel("External Startup Time (ms)")
+            plt.title(f"Quarkus Startup Comparison ({lane}, {profile})")
+            plt.tight_layout()
+            plt.savefig(output_png, dpi=200)
+            plt.close()
+            generated_outputs.append(output_png)
 
     for output in generated_outputs:
         print(f"SUCCESS: Startup chart written to {output}")

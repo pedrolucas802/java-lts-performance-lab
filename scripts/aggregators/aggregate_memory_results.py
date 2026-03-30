@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from result_metadata import iter_track_dirs, scenario_metadata
+from result_metadata import common_run_metadata, iter_track_dirs, scenario_metadata
 
 
 # Constants
@@ -68,22 +68,30 @@ def parse_key_value_file(file_path: Path) -> dict[str, str]:
 def collect_rows() -> list[dict]:
     rows: list[dict] = []
 
-    for profile, java_version, memory_dir in iter_track_dirs(RESULTS_ROOT, "memory"):
+    for profile, lane, java_version, memory_dir in iter_track_dirs(RESULTS_ROOT, "memory"):
         for metrics_file in sorted(memory_dir.glob("*-memory-java*.txt")):
             parsed = parse_key_value_file(metrics_file)
             metadata = scenario_metadata(parsed.get("scenario", ""), "memory", metrics_file)
+            run_metadata = common_run_metadata(parsed, profile, lane)
 
             rows.append({
                 "java_version": java_version,
                 "scenario": metadata["scenario"],
-                "profile": parsed.get("profile", profile),
+                "profile": run_metadata["profile"],
+                "lane": run_metadata["lane"],
+                "host_os": run_metadata["host_os"],
+                "container_runtime": run_metadata["container_runtime"],
+                "cpu_limit": run_metadata["cpu_limit"],
+                "memory_limit_mb": run_metadata["memory_limit_mb"],
+                "loadgen_location": run_metadata["loadgen_location"],
+                "app_location": run_metadata["app_location"],
                 "thread_mode": metadata["thread_mode"],
                 "db_mode": metadata["db_mode"],
                 "run_class": metadata["run_class"],
                 "idle_rss_kb": int(parsed.get("idle_rss_kb", "0")),
                 "post_load_rss_kb": int(parsed.get("post_load_rss_kb", "0")),
                 "rss_delta_kb": int(parsed.get("rss_delta_kb", "0")),
-                "pid": int(parsed.get("pid", "0")),
+                "pid": parsed.get("pid", ""),
                 "log_file": parsed.get("log_file", ""),
                 "source_file": str(metrics_file),
             })
@@ -96,6 +104,13 @@ def write_csv(rows: list[dict], output_file: Path) -> None:
         "java_version",
         "scenario",
         "profile",
+        "lane",
+        "host_os",
+        "container_runtime",
+        "cpu_limit",
+        "memory_limit_mb",
+        "loadgen_location",
+        "app_location",
         "thread_mode",
         "db_mode",
         "run_class",

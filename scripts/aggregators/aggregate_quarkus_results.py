@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-from result_metadata import iter_track_dirs, scenario_metadata
+from result_metadata import common_run_metadata, iter_track_dirs, scenario_metadata
 
 
 # Constants
@@ -66,7 +66,14 @@ def extract_int(pattern: str, text: str) -> int | None:
     return int(match.group(1))
 
 
-def parse_summary_file(file_path: Path, java_version: str, scenario: str, profile: str) -> dict:
+def parse_summary_file(
+    file_path: Path,
+    java_version: str,
+    scenario: str,
+    profile: str,
+    lane: str,
+    parsed_metadata: dict[str, str] | None = None,
+) -> dict:
     try:
         text = file_path.read_text(encoding="utf-8")
     except Exception as e:
@@ -84,11 +91,19 @@ def parse_summary_file(file_path: Path, java_version: str, scenario: str, profil
     failed_rate = extract_float(r"http_req_failed\.*:\s+([0-9.]+)%", text)
 
     metadata = scenario_metadata(scenario, "http", file_path)
+    run_metadata = common_run_metadata(parsed_metadata or {}, profile, lane)
 
     return {
         "java_version": java_version,
         "scenario": metadata["scenario"],
-        "profile": profile,
+        "profile": run_metadata["profile"],
+        "lane": run_metadata["lane"],
+        "host_os": run_metadata["host_os"],
+        "container_runtime": run_metadata["container_runtime"],
+        "cpu_limit": run_metadata["cpu_limit"],
+        "memory_limit_mb": run_metadata["memory_limit_mb"],
+        "loadgen_location": run_metadata["loadgen_location"],
+        "app_location": run_metadata["app_location"],
         "thread_mode": metadata["thread_mode"],
         "db_mode": metadata["db_mode"],
         "run_class": metadata["run_class"],
@@ -106,11 +121,34 @@ def parse_summary_file(file_path: Path, java_version: str, scenario: str, profil
 def collect_rows() -> list[dict]:
     rows: list[dict] = []
 
-    for profile, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
+    for profile, lane, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
+        metrics_files = sorted(java_dir.glob("*-metrics.txt"))
+        if metrics_files:
+            for metrics_file in metrics_files:
+                parsed = {}
+                try:
+                    for line in metrics_file.read_text(encoding="utf-8").splitlines():
+                        if "=" not in line:
+                            continue
+                        key, value = line.split("=", 1)
+                        parsed[key.strip()] = value.strip()
+                except Exception as exc:
+                    print(f"WARNING: Failed to parse {metrics_file}: {exc}")
+                    continue
+
+                summary_file = Path(parsed.get("summary_file", ""))
+                if not summary_file.is_absolute():
+                    summary_file = java_dir / summary_file.name
+                scenario = parsed.get("scenario", metrics_file.name.replace("-metrics.txt", ""))
+                row = parse_summary_file(summary_file, java_version, scenario, profile, lane, parsed)
+                if row:
+                    rows.append(row)
+            continue
+
         for summary_file in sorted(java_dir.glob("*-summary.txt")):
             scenario = summary_file.name.replace("-summary.txt", "")
-            row = parse_summary_file(summary_file, java_version, scenario, profile)
-            if row:  # only add if parsing succeeded
+            row = parse_summary_file(summary_file, java_version, scenario, profile, lane)
+            if row:
                 rows.append(row)
 
     return rows
@@ -123,11 +161,11 @@ def merge_repeated_runs(rows: list[dict]) -> list[dict]:
 
     merged = defaultdict(list)
     for row in rows:
-        key = (row['java_version'], row['scenario'], row['profile'])
+        key = (row['java_version'], row['scenario'], row['profile'], row.get('lane', 'host'))
         merged[key].append(row)
 
     result = []
-    for (java_version, scenario, profile), runs in merged.items():
+    for (java_version, scenario, profile, lane), runs in merged.items():
         if len(runs) == 1:
             result.append(runs[0])
         else:
@@ -136,6 +174,13 @@ def merge_repeated_runs(rows: list[dict]) -> list[dict]:
                 'java_version': java_version,
                 'scenario': scenario,
                 'profile': profile,
+                'lane': lane,
+                'host_os': runs[0].get('host_os', 'unknown'),
+                'container_runtime': runs[0].get('container_runtime', 'none'),
+                'cpu_limit': runs[0].get('cpu_limit', 'unlimited'),
+                'memory_limit_mb': runs[0].get('memory_limit_mb', '0'),
+                'loadgen_location': runs[0].get('loadgen_location', 'host'),
+                'app_location': runs[0].get('app_location', 'host'),
                 'thread_mode': runs[0]['thread_mode'],
                 'db_mode': runs[0]['db_mode'],
                 'run_class': runs[0]['run_class'],
@@ -158,6 +203,13 @@ def write_csv(rows: list[dict], output_file: Path) -> None:
         "java_version",
         "scenario",
         "profile",
+        "lane",
+        "host_os",
+        "container_runtime",
+        "cpu_limit",
+        "memory_limit_mb",
+        "loadgen_location",
+        "app_location",
         "thread_mode",
         "db_mode",
         "run_class",
