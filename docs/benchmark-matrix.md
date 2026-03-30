@@ -41,6 +41,7 @@ Endpoints used in experiments:
 |------|------|
 | `/health` | readiness checks and startup validation |
 | `/products` | JSON serialization workload |
+| `/products-db` | pooled JDBC read workload |
 | `/transform` | allocation-heavy request/response workload |
 | `/aggregate` | concurrency and fan-out workload |
 
@@ -59,8 +60,10 @@ HTTP load testing is performed using **k6**.
 Current scenarios include:
 
 - `products` workload
+- `products-db` workload
 - `transform` workload
 - `aggregate` concurrency workload
+- `mixed-workload` as an optional weighted traffic blend
 
 These scenarios allow measurement of:
 

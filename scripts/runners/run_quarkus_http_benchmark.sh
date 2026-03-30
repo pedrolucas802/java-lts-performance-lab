@@ -12,9 +12,10 @@ JAVA_VERSION="${1:-21}"
 SCENARIO="${2:-products}"
 DURATION="${3:-20s}"
 VUS="${4:-10}"
+BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 
 # Constants
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw"
+RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
 K6_DIR="${PROJECT_ROOT}/infra/k6"
 PORT="${PORT:-8080}"
 
@@ -34,7 +35,7 @@ Run HTTP load test against Quarkus application using K6.
 
 Arguments:
     JAVA_VERSION    Java version to test (17, 21, 25) [default: 21]
-    SCENARIO        Test scenario (products, transform, aggregate, aggregate-platform, aggregate-virtual) [default: products]
+    SCENARIO        Test scenario (products, products-db, transform, mixed-workload, aggregate, aggregate-platform, aggregate-virtual) [default: products]
     DURATION        Test duration (e.g., 30s, 5m) [default: 20s]
     VUS             Number of virtual users [default: 10]
 
@@ -60,8 +61,8 @@ if ! [[ "$JAVA_VERSION" =~ ^(17|21|25)$ ]]; then
     exit 1
 fi
 
-if ! [[ "$SCENARIO" =~ ^(products|transform|aggregate|aggregate-platform|aggregate-virtual)$ ]]; then
-    echo "ERROR: Invalid SCENARIO '$SCENARIO'. Must be products, transform, aggregate, aggregate-platform, or aggregate-virtual." >&2
+if ! [[ "$SCENARIO" =~ ^(products|products-db|transform|mixed-workload|aggregate|aggregate-platform|aggregate-virtual)$ ]]; then
+    echo "ERROR: Invalid SCENARIO '$SCENARIO'. Must be products, products-db, transform, mixed-workload, aggregate, aggregate-platform, or aggregate-virtual." >&2
     exit 1
 fi
 
@@ -91,6 +92,7 @@ mkdir -p "${RESULTS_DIR}"
 echo "INFO: Starting HTTP load test"
 echo "INFO: Java version: ${JAVA_VERSION}"
 echo "INFO: Scenario: ${SCENARIO}"
+echo "INFO: Profile: ${BENCHMARK_PROFILE}"
 echo "INFO: Duration: ${DURATION}"
 echo "INFO: Virtual users: ${VUS}"
 echo "INFO: Results directory: ${RESULTS_DIR}"

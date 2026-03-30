@@ -1,0 +1,9 @@
+profile = "tuned"
+description = "Heap- and pool-tuned Java 21 benchmark profile."
+app_jvm_opts = ["-Xms512m", "-Xmx512m", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=100"]
+
+[app_env]
+BENCHMARK_DATASOURCE_INITIAL_SIZE = "4"
+BENCHMARK_DATASOURCE_MIN_SIZE = "4"
+BENCHMARK_DATASOURCE_MAX_SIZE = "24"
+BENCHMARK_DATASOURCE_ACQUISITION_TIMEOUT_SECONDS = "1"

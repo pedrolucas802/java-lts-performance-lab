@@ -7,6 +7,8 @@ import json
 import sys
 from pathlib import Path
 
+from result_metadata import iter_track_dirs, scenario_metadata
+
 
 # Constants
 RESULTS_ROOT = Path("results/raw")
@@ -66,15 +68,18 @@ def parse_key_value_file(file_path: Path) -> dict[str, str]:
 def collect_rows() -> list[dict]:
     rows: list[dict] = []
 
-    for memory_dir in sorted(RESULTS_ROOT.glob("java*/memory")):
-        java_version = memory_dir.parent.name.replace("java", "")
-
+    for profile, java_version, memory_dir in iter_track_dirs(RESULTS_ROOT, "memory"):
         for metrics_file in sorted(memory_dir.glob("*-memory-java*.txt")):
             parsed = parse_key_value_file(metrics_file)
+            metadata = scenario_metadata(parsed.get("scenario", ""), "memory")
 
             rows.append({
                 "java_version": java_version,
-                "scenario": parsed.get("scenario", ""),
+                "scenario": metadata["scenario"],
+                "profile": parsed.get("profile", profile),
+                "thread_mode": metadata["thread_mode"],
+                "db_mode": metadata["db_mode"],
+                "run_class": metadata["run_class"],
                 "idle_rss_kb": int(parsed.get("idle_rss_kb", "0")),
                 "post_load_rss_kb": int(parsed.get("post_load_rss_kb", "0")),
                 "rss_delta_kb": int(parsed.get("rss_delta_kb", "0")),
@@ -90,6 +95,10 @@ def write_csv(rows: list[dict], output_file: Path) -> None:
     fieldnames = [
         "java_version",
         "scenario",
+        "profile",
+        "thread_mode",
+        "db_mode",
+        "run_class",
         "idle_rss_kb",
         "post_load_rss_kb",
         "rss_delta_kb",

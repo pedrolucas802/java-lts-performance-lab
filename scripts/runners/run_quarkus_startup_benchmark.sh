@@ -11,10 +11,12 @@ COMMON_SH="${PROJECT_ROOT}/scripts/common.sh"
 # Default values
 JAVA_VERSION="${1:-21}"
 REPETITIONS="${2:-1}"
+BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
 # Constants
 APP_DIR="quarkus-app"
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw"
+RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
 PORT="${PORT:-8080}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-60}"
 
@@ -60,6 +62,7 @@ mkdir -p "${RESULTS_DIR}"
 echo "INFO: Starting Quarkus startup benchmark"
 echo "INFO: Java version: ${JAVA_VERSION}"
 echo "INFO: Repetitions: ${REPETITIONS}"
+echo "INFO: Profile: ${BENCHMARK_PROFILE}"
 echo "INFO: Results directory: ${RESULTS_DIR}"
 
 # Source common functions
@@ -127,7 +130,7 @@ run_startup_benchmark() {
     start_ns=$(now_ns)
 
     local app_pid
-    app_pid=$(start_app "${JAR_PATH}" "${log_file}" "" "${PORT}")
+    app_pid=$(start_app "${JAR_PATH}" "${log_file}" "${APP_JVM_OPTS}" "${PORT}")
 
     if ! wait_for_health "${PORT}" "${MAX_WAIT_SECONDS}"; then
         error "Application failed to start within ${MAX_WAIT_SECONDS} seconds"
@@ -147,6 +150,8 @@ run_startup_benchmark() {
 
     {
         echo "java_version=${JAVA_VERSION}"
+        echo "profile=${BENCHMARK_PROFILE}"
+        echo "scenario=startup"
         echo "run_number=${run_num}"
         echo "external_startup_ms=${external_startup_ms}"
         echo "quarkus_startup_ms=${quarkus_startup_ms}"

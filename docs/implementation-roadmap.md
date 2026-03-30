@@ -1,0 +1,214 @@
+# Implementation Roadmap
+
+This roadmap turns the benchmark matrix into an execution plan that is easier to implement, verify, and discuss.
+
+The structure is inspired by:
+
+- Quarkus benchmark reporting style from the March 2, 2026 article at `https://quarkus.io/blog/new-benchmarks/`
+- the benchmark harness split between easy local runs and stricter isolated runs in `https://github.com/quarkusio/spring-quarkus-perf-comparison`
+
+This lab adapts those ideas to a different goal:
+
+- compare Java 17, 21, and 25 on the same application
+- compare platform threads and virtual threads where applicable
+- publish both stock and lightly tuned runs once the harness is stable
+
+## Comparison Matrix
+
+Every milestone should preserve the same comparison matrix unless a row is intentionally out of scope:
+
+| Label | Java | Thread Mode | Purpose |
+|---|---|---|---|
+| `17-platform` | 17 | platform | long-term baseline |
+| `21-platform` | 21 | platform | isolate JVM changes from Loom |
+| `21-virtual` | 21 | virtual | first Loom comparison |
+| `25-platform` | 25 | platform | current LTS JVM comparison |
+| `25-virtual` | 25 | virtual | current Loom comparison |
+
+Later milestones add a second dimension:
+
+- `stock`
+- `lightly-tuned`
+
+## Milestones
+
+### M1 - Harness and Result Integrity
+
+Primary goal:
+
+- make current numbers trustworthy before expanding coverage
+
+Work:
+
+- fix scenario-labeling bugs in runners
+- make chart generation include all scenarios across versions
+- align runbook and Make targets with real commands
+- define a stable processed-result schema for startup, HTTP, memory, GC, concurrency, and JFR
+- document confidence levels for local runs vs isolated runs
+
+Feature comparison focus:
+
+| Area | M1 comparison goal |
+|---|---|
+| Garbage collector and memory | trustworthy RSS baselines, post-load RSS, heap metadata placeholders |
+| CPU usage | define output schema for CPU metrics even if collection is added in M4 |
+| I/O | keep current synthetic workloads, but mark them as non-final |
+| Threads / concurrency / Loom | only compare modes that are already implemented, with clear labels |
+| JVM | startup, first-request, warmup, and steady-state throughput baselines |
+
+Deliverables:
+
+- fixed benchmark runners
+- updated charts
+- updated runbook
+- milestone roadmap in docs
+
+Exit criteria:
+
+- no mislabeled aggregate scenarios
+- generated charts include `aggregate-virtual` when data exists
+- a new contributor can run the working commands from docs without guessing
+
+### M2 - Real I/O Groundwork
+
+Primary goal:
+
+- move at least one benchmark path from synthetic in-memory work to real blocking I/O
+
+Work:
+
+- add a Postgres-backed read path
+- seed benchmark data in Dockerized Postgres
+- add at least one k6 scenario for the DB-backed path
+- define how mixed workload runs should combine JSON, transform, DB, and aggregation endpoints
+
+Feature comparison focus:
+
+| Area | M2 comparison goal |
+|---|---|
+| Garbage collector and memory | compare synthetic JSON vs DB-backed reads under the same result schema |
+| CPU usage | compare CPU cost per request between in-memory and DB-backed paths |
+| I/O | establish a real database path as the new baseline I/O workload |
+| Threads / concurrency / Loom | keep platform mode first so I/O shape is isolated from Loom changes |
+| JVM | compare how each JDK behaves once request latency includes real blocking work |
+
+Deliverables:
+
+- DB-backed Quarkus endpoint
+- Postgres seed data
+- DB-backed k6 scenario
+
+Exit criteria:
+
+- benchmark app can serve one repeatable DB-backed scenario
+- Dockerized Postgres contains deterministic seed data
+- the new scenario is documented as optional groundwork for later milestones
+
+### M3 - Loom and Concurrency Study
+
+Primary goal:
+
+- compare platform threads and virtual threads with the same blocking workload
+
+Work:
+
+- replace purely synthetic aggregate behavior with real downstream blocking work
+- run concurrency ramps at multiple VU levels
+- publish a dedicated `concurrency-summary.csv`
+- generate platform-vs-virtual charts
+
+Feature comparison focus:
+
+| Area | M3 comparison goal |
+|---|---|
+| Garbage collector and memory | compare thread-related footprint and allocation growth under load |
+| CPU usage | observe scheduler overhead and CPU cost at rising concurrency |
+| I/O | compare blocking behavior with JDBC or downstream HTTP fan-out |
+| Threads / concurrency / Loom | main focus of the milestone |
+| JVM | compare `21-platform` vs `21-virtual` and `25-platform` vs `25-virtual` before cross-version claims |
+
+### M4 - GC, JFR, and CPU Deep Dive
+
+Primary goal:
+
+- move from top-line performance to runtime-behavior analysis
+
+Work:
+
+- add structured GC logging
+- add GC parsing and `gc-summary.csv`
+- capture JFR files for representative scenarios
+- add CPU and memory timeline collection
+- document hottest methods, allocation hotspots, and pause distribution
+
+Feature comparison focus:
+
+| Area | M4 comparison goal |
+|---|---|
+| Garbage collector and memory | GC count, pause time, live-set growth, allocation pressure |
+| CPU usage | CPU-seconds per scenario, hot methods, safepoints, scheduler effects |
+| I/O | separate blocked time from CPU time |
+| Threads / concurrency / Loom | inspect parking, pinning, scheduler events |
+| JVM | main focus of the milestone through JFR, GC logs, and warmup behavior |
+
+### M5 - Stock vs Lightly Tuned Runs
+
+Primary goal:
+
+- publish both out-of-the-box and lightly tuned comparisons
+
+Work:
+
+- define a small tuning profile set
+- tune heap sizes, connection pools, and selected JVM flags in a controlled way
+- publish both stock and tuned result sets
+
+Feature comparison focus:
+
+| Area | M5 comparison goal |
+|---|---|
+| Garbage collector and memory | measure memory-vs-throughput trade-offs |
+| CPU usage | measure throughput per core before and after tuning |
+| I/O | connection-pool and queueing effects |
+| Threads / concurrency / Loom | tuned platform and virtual comparisons |
+| JVM | determine whether newer JDKs need less tuning or benefit differently from it |
+
+### M6 - Isolated and Containerized Runs
+
+Primary goal:
+
+- move from a convenient local bench to a higher-confidence lab setup
+
+Work:
+
+- isolate load generation from the app process
+- add container-constrained runs
+- capture CPU and memory limits in result metadata
+- prefer a Linux lane for cgroup-sensitive claims
+
+Feature comparison focus:
+
+| Area | M6 comparison goal |
+|---|---|
+| Garbage collector and memory | constrained memory behavior and RSS under limits |
+| CPU usage | throttling, quotas, and per-core efficiency |
+| I/O | cleaner I/O observations without same-host interference |
+| Threads / concurrency / Loom | Loom behavior under constrained cores |
+| JVM | final higher-confidence comparison lane |
+
+## Immediate Backlog
+
+### Next changes to land
+
+1. Fix `aggregate-virtual` memory scenario handling.
+2. Fix Quarkus chart generation to include every scenario seen in processed data.
+3. Update the runbook and Make targets to reflect working commands.
+4. Add one optional Postgres-backed endpoint and scenario.
+5. Decide whether `run_full_benchmark_lab.py` becomes the primary orchestrator or remains an advanced entry point.
+
+### Open questions for later milestones
+
+- Should the main realistic I/O workload use JDBC, downstream HTTP fan-out, or both?
+- Should mixed-workload runs be weighted by request mix or time-sliced by scenario?
+- Should tuned runs standardize on one heap policy across all JDKs or preserve each JDK default first?
+- Which final claims require Linux-only validation before publication?

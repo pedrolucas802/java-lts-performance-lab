@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 
+from result_metadata import iter_track_dirs, scenario_metadata
+
 
 # Constants
 RESULTS_ROOT = Path("results/raw")
@@ -64,7 +66,7 @@ def extract_int(pattern: str, text: str) -> int | None:
     return int(match.group(1))
 
 
-def parse_summary_file(file_path: Path, java_version: str, scenario: str) -> dict:
+def parse_summary_file(file_path: Path, java_version: str, scenario: str, profile: str) -> dict:
     try:
         text = file_path.read_text(encoding="utf-8")
     except Exception as e:
@@ -81,9 +83,15 @@ def parse_summary_file(file_path: Path, java_version: str, scenario: str) -> dic
 
     failed_rate = extract_float(r"http_req_failed\.*:\s+([0-9.]+)%", text)
 
+    metadata = scenario_metadata(scenario, "http")
+
     return {
         "java_version": java_version,
-        "scenario": scenario,
+        "scenario": metadata["scenario"],
+        "profile": profile,
+        "thread_mode": metadata["thread_mode"],
+        "db_mode": metadata["db_mode"],
+        "run_class": metadata["run_class"],
         "http_reqs": http_reqs,
         "reqs_per_sec": reqs_per_sec,
         "avg_ms": avg_ms,
@@ -98,12 +106,10 @@ def parse_summary_file(file_path: Path, java_version: str, scenario: str) -> dic
 def collect_rows() -> list[dict]:
     rows: list[dict] = []
 
-    for java_dir in sorted(RESULTS_ROOT.glob("java*/quarkus")):
-        java_version = java_dir.parent.name.replace("java", "")
-
+    for profile, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
         for summary_file in sorted(java_dir.glob("*-summary.txt")):
             scenario = summary_file.name.replace("-summary.txt", "")
-            row = parse_summary_file(summary_file, java_version, scenario)
+            row = parse_summary_file(summary_file, java_version, scenario, profile)
             if row:  # only add if parsing succeeded
                 rows.append(row)
 
@@ -117,11 +123,11 @@ def merge_repeated_runs(rows: list[dict]) -> list[dict]:
 
     merged = defaultdict(list)
     for row in rows:
-        key = (row['java_version'], row['scenario'])
+        key = (row['java_version'], row['scenario'], row['profile'])
         merged[key].append(row)
 
     result = []
-    for (java_version, scenario), runs in merged.items():
+    for (java_version, scenario, profile), runs in merged.items():
         if len(runs) == 1:
             result.append(runs[0])
         else:
@@ -129,6 +135,10 @@ def merge_repeated_runs(rows: list[dict]) -> list[dict]:
             avg_row = {
                 'java_version': java_version,
                 'scenario': scenario,
+                'profile': profile,
+                'thread_mode': runs[0]['thread_mode'],
+                'db_mode': runs[0]['db_mode'],
+                'run_class': runs[0]['run_class'],
                 'http_reqs': sum(r.get('http_reqs') or 0 for r in runs) // len(runs),
                 'reqs_per_sec': statistics.mean(r['reqs_per_sec'] for r in runs if r.get('reqs_per_sec')),
                 'avg_ms': statistics.mean(r['avg_ms'] for r in runs if r.get('avg_ms')),
@@ -147,6 +157,10 @@ def write_csv(rows: list[dict], output_file: Path) -> None:
     fieldnames = [
         "java_version",
         "scenario",
+        "profile",
+        "thread_mode",
+        "db_mode",
+        "run_class",
         "http_reqs",
         "reqs_per_sec",
         "avg_ms",

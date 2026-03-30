@@ -7,9 +7,12 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 JAVA_VERSION="${1:-21}"
 SCENARIO="${2:-products}"
 HEAP_INFO="${HEAP_INFO:-false}"
+VUS="${VUS:-20}"
+BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
+APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
 APP_DIR="quarkus-app"
-RESULTS_ROOT="${PROJECT_ROOT}/results/raw"
+RESULTS_ROOT="${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}"
 K6_DIR="${PROJECT_ROOT}/infra/k6"
 
 PORT="${PORT:-8081}"
@@ -36,6 +39,11 @@ else
     K6_SCRIPT="${K6_DIR}/${SCENARIO}.js"
 fi
 
+if ! [[ "$SCENARIO" =~ ^(products|products-db|transform|mixed-workload|aggregate|aggregate-platform|aggregate-virtual)$ ]]; then
+    error "Invalid SCENARIO '$SCENARIO'. Must be products, products-db, transform, mixed-workload, aggregate, aggregate-platform, or aggregate-virtual."
+    exit 1
+fi
+
 if [[ ! -f "${K6_SCRIPT}" ]]; then
     error "K6 script not found: ${K6_SCRIPT}"
     exit 1
@@ -44,6 +52,7 @@ fi
 info "Starting memory benchmark"
 info "Java version: ${JAVA_VERSION}"
 info "Scenario: ${SCENARIO}"
+info "Profile: ${BENCHMARK_PROFILE}"
 info "Results directory: ${RESULTS_DIR}"
 
 build_app "${JAVA_VERSION}" "${APP_DIR}"
@@ -53,10 +62,10 @@ JAR_PATH=$(find_jar "${APP_DIR}")
 LOG_FILE="${RESULTS_DIR}/${SCENARIO}-memory-java${JAVA_VERSION}.log"
 METRICS_FILE="${RESULTS_DIR}/${SCENARIO}-memory-java${JAVA_VERSION}.txt"
 
-JVM_OPTS=""
+JVM_OPTS="${APP_JVM_OPTS}"
 
 if [[ "${HEAP_INFO}" == "true" ]]; then
-    JVM_OPTS="-XX:+PrintGC"
+    JVM_OPTS="${JVM_OPTS} -XX:+PrintGC"
 fi
 
 info "Starting Quarkus app..."
@@ -75,12 +84,28 @@ K6_JSON_FILE="${RESULTS_DIR}/${SCENARIO}-k6.json"
 
 info "Running load test..."
 
-k6 run \
-  --out json="${K6_JSON_FILE}" \
-  -e BASE_URL="http://localhost:${PORT}" \
-  -e DURATION="${DURATION}" \
-  "${K6_SCRIPT}" \
-  | tee "${SUMMARY_FILE}"
+EXTRA_ENV=()
+if [[ "$SCENARIO" == "aggregate-platform" ]]; then
+    EXTRA_ENV+=(-e "AGG_MODE=platform")
+elif [[ "$SCENARIO" == "aggregate-virtual" ]]; then
+    EXTRA_ENV+=(-e "AGG_MODE=virtual")
+fi
+
+k6_cmd=(
+  k6 run
+  --out "json=${K6_JSON_FILE}"
+  -e "BASE_URL=http://localhost:${PORT}"
+  -e "DURATION=${DURATION}"
+  -e "VUS=${VUS}"
+)
+
+if [[ ${#EXTRA_ENV[@]} -gt 0 ]]; then
+  k6_cmd+=("${EXTRA_ENV[@]}")
+fi
+
+k6_cmd+=("${K6_SCRIPT}")
+
+"${k6_cmd[@]}" | tee "${SUMMARY_FILE}"
 
 sleep 1
 
@@ -92,6 +117,7 @@ RSS_DELTA_KB=$((POST_LOAD_RSS_KB - IDLE_RSS_KB))
 
 {
 echo "java_version=${JAVA_VERSION}"
+echo "profile=${BENCHMARK_PROFILE}"
 echo "scenario=${SCENARIO}"
 echo "idle_rss_kb=${IDLE_RSS_KB}"
 echo "post_load_rss_kb=${POST_LOAD_RSS_KB}"

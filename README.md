@@ -93,6 +93,24 @@ java-lts-performance-lab
 
 ---
 
+# Primary Workflow
+
+The primary benchmark entrypoint is:
+
+`python3 scripts/runners/run_full_benchmark_lab.py`
+
+It now supports:
+
+- Java-specific `stock` and `tuned` profile configs under `config/benchmark-profiles/`
+- official HTTP scenarios for `products`, `products-db`, `transform`, `aggregate-platform`, and `aggregate-virtual`
+- optional `mixed-workload` execution when explicitly enabled
+- profile-aware raw result storage under `results/raw/{profile}/`
+- dedicated concurrency summary and aggregate thread-mode charts
+
+The smaller bash runners remain useful for targeted smoke tests and single-scenario reruns.
+
+---
+
 # Initial Observations
 
 Early steady-state Quarkus HTTP benchmarks on **Apple Silicon (M4 Pro)** show **very similar throughput across Java 17, Java 21, and Java 25** for lightweight REST workloads.
@@ -119,10 +137,13 @@ Current progress:
 - repository structure implemented
 - JMH microbenchmarks implemented
 - Quarkus benchmark application implemented
+- DB-backed `products-db` scenario implemented as the primary real-I/O baseline
+- profile-aware benchmark configs added for `stock` and `tuned` runs
+- full benchmark runner promoted as the canonical orchestrator
 - startup benchmark pipeline working
 - HTTP load tests working
 - result aggregation scripts implemented
-- startup charts generated
+- startup, HTTP, and concurrency chart generation implemented
 
 Next work focuses on:
 

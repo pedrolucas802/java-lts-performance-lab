@@ -50,17 +50,41 @@ def validate_inputs() -> bool:
     return True
 
 
+def collect_scenarios(data: dict) -> list[str]:
+    """Collect every scenario present in the dataset with a stable display order."""
+    preferred_order = [
+        "products",
+        "products-db",
+        "transform",
+        "mixed-workload",
+        "aggregate-platform",
+        "aggregate-virtual",
+        "aggregate",
+    ]
+
+    discovered = set()
+    for scenarios in data.values():
+        discovered.update(scenarios.keys())
+
+    ordered = [scenario for scenario in preferred_order if scenario in discovered]
+    extras = sorted(discovered.difference(preferred_order))
+    return ordered + extras
+
+
 def generate_throughput_chart(data: dict, output_file: Path) -> None:
     """Generate throughput comparison chart."""
     java_versions = list(data.keys())
-    scenarios = list(data[java_versions[0]].keys())
+    scenarios = collect_scenarios(data)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     bar_width = 0.2
     x = range(len(scenarios))
 
     for i, java in enumerate(java_versions):
-        throughputs = [data[java][scenario]['reqs_per_sec'] or 0 for scenario in scenarios]
+        throughputs = [
+            data[java].get(scenario, {}).get('reqs_per_sec') or 0
+            for scenario in scenarios
+        ]
         ax.bar([pos + i * bar_width for pos in x], throughputs, bar_width, label=f'Java {java}')
 
     ax.set_xlabel('Scenario')
@@ -77,15 +101,21 @@ def generate_throughput_chart(data: dict, output_file: Path) -> None:
 def generate_latency_chart(data: dict, output_file: Path) -> None:
     """Generate latency comparison chart."""
     java_versions = list(data.keys())
-    scenarios = list(data[java_versions[0]].keys())
+    scenarios = collect_scenarios(data)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     bar_width = 0.15
     x = range(len(scenarios))
 
     for i, java in enumerate(java_versions):
-        avg_latencies = [data[java][scenario]['avg_ms'] or 0 for scenario in scenarios]
-        p95_latencies = [data[java][scenario]['p95_ms'] or 0 for scenario in scenarios]
+        avg_latencies = [
+            data[java].get(scenario, {}).get('avg_ms') or 0
+            for scenario in scenarios
+        ]
+        p95_latencies = [
+            data[java].get(scenario, {}).get('p95_ms') or 0
+            for scenario in scenarios
+        ]
 
         ax.bar([pos + i * bar_width for pos in x], avg_latencies, bar_width, label=f'Java {java} Avg', alpha=0.7)
         ax.bar([pos + i * bar_width + bar_width/2 for pos in x], p95_latencies, bar_width, label=f'Java {java} P95', alpha=0.7)
@@ -104,14 +134,17 @@ def generate_latency_chart(data: dict, output_file: Path) -> None:
 def generate_failure_rate_chart(data: dict, output_file: Path) -> None:
     """Generate failure rate comparison chart."""
     java_versions = list(data.keys())
-    scenarios = list(data[java_versions[0]].keys())
+    scenarios = collect_scenarios(data)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     bar_width = 0.2
     x = range(len(scenarios))
 
     for i, java in enumerate(java_versions):
-        failure_rates = [data[java][scenario]['failed_rate'] or 0 for scenario in scenarios]
+        failure_rates = [
+            data[java].get(scenario, {}).get('failed_rate') or 0
+            for scenario in scenarios
+        ]
         ax.bar([pos + i * bar_width for pos in x], failure_rates, bar_width, label=f'Java {java}')
 
     ax.set_xlabel('Scenario')
@@ -123,6 +156,10 @@ def generate_failure_rate_chart(data: dict, output_file: Path) -> None:
     plt.tight_layout()
     plt.savefig(output_file, dpi=150)
     plt.close()
+
+
+def default_profile_name(profiles: list[str]) -> str:
+    return "stock" if "stock" in profiles else profiles[0]
 
 
 def main() -> None:
@@ -147,11 +184,14 @@ def main() -> None:
         with INPUT_CSV.open("r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                profile = row.get("profile", "stock") or "stock"
                 java = row["java_version"]
                 scenario = row["scenario"]
-                if java not in data:
-                    data[java] = {}
-                data[java][scenario] = {
+                if profile not in data:
+                    data[profile] = {}
+                if java not in data[profile]:
+                    data[profile][java] = {}
+                data[profile][java][scenario] = {
                     'reqs_per_sec': float(row["reqs_per_sec"]) if row["reqs_per_sec"] else None,
                     'avg_ms': float(row["avg_ms"]) if row["avg_ms"] else None,
                     'p95_ms': float(row["p95_ms"]) if row["p95_ms"] else None,
@@ -166,34 +206,42 @@ def main() -> None:
         sys.exit(1)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    profiles = sorted(data.keys(), key=lambda name: (name != "stock", name))
+    default_profile = default_profile_name(profiles)
+    generated_outputs: list[Path] = []
 
-    # Generate charts
-    throughput_png = OUTPUT_DIR / "quarkus-throughput-comparison.png"
-    try:
-        generate_throughput_chart(data, throughput_png)
-    except Exception as e:
-        print(f"ERROR: Failed to generate throughput chart {throughput_png}: {e}")
-        sys.exit(1)
+    for profile in profiles:
+        suffix = "" if profile == default_profile else f"-{profile}"
+        profile_data = data[profile]
 
-    latency_png = OUTPUT_DIR / "quarkus-latency-comparison.png"
-    try:
-        generate_latency_chart(data, latency_png)
-    except Exception as e:
-        print(f"ERROR: Failed to generate latency chart {latency_png}: {e}")
-        sys.exit(1)
+        throughput_png = OUTPUT_DIR / f"quarkus-throughput-comparison{suffix}.png"
+        try:
+            generate_throughput_chart(profile_data, throughput_png)
+        except Exception as e:
+            print(f"ERROR: Failed to generate throughput chart {throughput_png}: {e}")
+            sys.exit(1)
+        generated_outputs.append(throughput_png)
 
-    failure_rate_png = OUTPUT_DIR / "quarkus-failure-rate-comparison.png"
-    try:
-        generate_failure_rate_chart(data, failure_rate_png)
-    except Exception as e:
-        print(f"ERROR: Failed to generate failure rate chart {failure_rate_png}: {e}")
-        sys.exit(1)
+        latency_png = OUTPUT_DIR / f"quarkus-latency-comparison{suffix}.png"
+        try:
+            generate_latency_chart(profile_data, latency_png)
+        except Exception as e:
+            print(f"ERROR: Failed to generate latency chart {latency_png}: {e}")
+            sys.exit(1)
+        generated_outputs.append(latency_png)
+
+        failure_rate_png = OUTPUT_DIR / f"quarkus-failure-rate-comparison{suffix}.png"
+        try:
+            generate_failure_rate_chart(profile_data, failure_rate_png)
+        except Exception as e:
+            print(f"ERROR: Failed to generate failure rate chart {failure_rate_png}: {e}")
+            sys.exit(1)
+        generated_outputs.append(failure_rate_png)
 
     print("SUCCESS: Generated Quarkus charts")
     print(f"  Input CSV: {INPUT_CSV}")
-    print(f"  Throughput chart: {throughput_png}")
-    print(f"  Latency chart: {latency_png}")
-    print(f"  Failure rate chart: {failure_rate_png}")
+    for output in generated_outputs:
+        print(f"  Chart: {output}")
 
 
 if __name__ == "__main__":

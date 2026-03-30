@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export const options = {
-  vus: 20,
+  vus: Number(__ENV.VUS || 20),
   duration: __ENV.DURATION || '20s',
   thresholds: {
     http_req_failed: ['rate<0.01'],

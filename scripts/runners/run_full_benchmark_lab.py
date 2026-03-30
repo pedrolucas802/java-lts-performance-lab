@@ -7,21 +7,35 @@ import os
 import subprocess
 import sys
 import time
+import tomllib
 import urllib.request
+from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from shutil import which
 from typing import Iterable, TextIO
 
-from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskID,
-    TextColumn,
-    TimeElapsedColumn,
-)
+try:
+    from rich.console import Console
+    from rich.progress import (
+        BarColumn,
+        Progress,
+        SpinnerColumn,
+        TaskID,
+        TextColumn,
+        TimeElapsedColumn,
+    )
+    HAS_RICH = True
+except ImportError:
+    Console = None
+    Progress = None
+    SpinnerColumn = None
+    BarColumn = None
+    TextColumn = None
+    TimeElapsedColumn = None
+    TaskID = int
+    HAS_RICH = False
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -29,12 +43,25 @@ RUNNERS_DIR = PROJECT_ROOT / "scripts" / "runners"
 AGGREGATORS_DIR = PROJECT_ROOT / "scripts" / "aggregators"
 CHARTS_DIR = PROJECT_ROOT / "scripts" / "charts"
 LOGS_DIR = PROJECT_ROOT / "results" / "logs"
+PROFILE_CONFIGS_DIR = PROJECT_ROOT / "config" / "benchmark-profiles"
 
-RICH_CONSOLE = Console()
+RICH_CONSOLE = Console() if HAS_RICH else None
 
 RUN_LOGGER: "RunLogger | None" = None
 RUN_TIMESTAMP: str | None = None
 LIVE_PROGRESS_ACTIVE = False
+
+
+@dataclass(frozen=True)
+class BenchmarkProfile:
+    name: str
+    description: str
+    app_jvm_opts: tuple[str, ...]
+    app_env: dict[str, str]
+
+    @property
+    def app_jvm_opts_string(self) -> str:
+        return " ".join(self.app_jvm_opts)
 
 
 class RunLogger:
@@ -71,7 +98,10 @@ def log_line(message: str) -> None:
 
 def console(message: str, *, force: bool = False) -> None:
     if force or not LIVE_PROGRESS_ACTIVE:
-        RICH_CONSOLE.print(message)
+        if HAS_RICH and RICH_CONSOLE is not None:
+            RICH_CONSOLE.print(message)
+        else:
+            print(message)
 
 
 def info(message: str, *, force_console: bool = False) -> None:
@@ -124,6 +154,40 @@ def build_env(java_version: str) -> dict[str, str]:
     java_home = macos_java_home(java_version)
     env["JAVA_HOME"] = java_home
     env["PATH"] = f"{java_home}/bin:{env.get('PATH', '')}"
+    return env
+
+
+def load_profile_config(java_version: str, profile_name: str) -> BenchmarkProfile:
+    profile_path = PROFILE_CONFIGS_DIR / profile_name / f"java{java_version}.toml"
+    if not profile_path.exists():
+        raise FileNotFoundError(f"Missing profile config: {profile_path}")
+
+    data = tomllib.loads(profile_path.read_text(encoding="utf-8"))
+    app_jvm_opts = tuple(str(item) for item in data.get("app_jvm_opts", []))
+    app_env = {
+        str(key): str(value)
+        for key, value in data.get("app_env", {}).items()
+    }
+
+    return BenchmarkProfile(
+        name=str(data.get("profile", profile_name)),
+        description=str(data.get("description", "")),
+        app_jvm_opts=app_jvm_opts,
+        app_env=app_env,
+    )
+
+
+def build_runtime_env(
+        java_version: str,
+        profile: BenchmarkProfile,
+        extra_env: dict[str, str] | None = None,
+) -> dict[str, str]:
+    env = build_env(java_version)
+    env.update(profile.app_env)
+    env["BENCHMARK_PROFILE"] = profile.name
+    env["APP_JVM_OPTS"] = profile.app_jvm_opts_string
+    if extra_env:
+        env.update(extra_env)
     return env
 
 
@@ -276,6 +340,7 @@ def find_quarkus_jar() -> Path:
 
 def start_quarkus_app(
         java_version: str,
+        profile: BenchmarkProfile,
         port: int,
         *,
         progress: Progress | None = None,
@@ -283,7 +348,7 @@ def start_quarkus_app(
         completed_tasks: int = 0,
         total_tasks: int = 0,
 ) -> tuple[subprocess.Popen[str], TextIO, Path]:
-    env = build_env(java_version)
+    env = build_runtime_env(java_version, profile, {"PORT": str(port)})
 
     run_command(
         [
@@ -296,14 +361,14 @@ def start_quarkus_app(
             f"-Djava.release={java_version}",
         ],
         env=env,
-        label=f"Building Quarkus app for Java {java_version}",
+        label=f"Building Quarkus app for Java {java_version} ({profile.name})",
         progress=progress,
         task_id=task_id,
         completed_tasks=completed_tasks,
         total_tasks=total_tasks,
     )
 
-    log_dir = PROJECT_ROOT / "results" / "raw" / f"java{java_version}" / "quarkus"
+    log_dir = PROJECT_ROOT / "results" / "raw" / profile.name / f"java{java_version}" / "quarkus"
     log_dir.mkdir(parents=True, exist_ok=True)
     run_suffix = RUN_TIMESTAMP or timestamp_now()
     log_file = log_dir / f"app-run-java{java_version}-{run_suffix}.log"
@@ -315,16 +380,17 @@ def start_quarkus_app(
         task_id,
         completed_tasks,
         total_tasks,
-        f"Starting Quarkus app for Java {java_version} on port {port}",
+        f"Starting Quarkus app for Java {java_version} ({profile.name}) on port {port}",
     )
 
-    info(f"Starting Quarkus app for Java {java_version} on port {port}")
+    info(f"Starting Quarkus app for Java {java_version} ({profile.name}) on port {port}")
 
     log_handle = log_file.open("w", encoding="utf-8")
+    command = ["java", *profile.app_jvm_opts, f"-Dquarkus.http.port={port}", "-jar", str(jar)]
     process = subprocess.Popen(
-        ["java", f"-Dquarkus.http.port={port}", "-jar", str(jar)],
+        command,
         cwd=str(PROJECT_ROOT),
-        env={**env, "PORT": str(port)},
+        env=env,
         stdout=log_handle,
         stderr=subprocess.STDOUT,
         text=True,
@@ -337,7 +403,7 @@ def start_quarkus_app(
         log_handle.close()
         raise
 
-    success(f"Quarkus app is healthy for Java {java_version}")
+    success(f"Quarkus app is healthy for Java {java_version} ({profile.name})")
     note(f"Application log: {log_file}")
 
     return process, log_handle, log_file
@@ -369,21 +435,25 @@ def validate_tools() -> None:
         )
 
 
-def scenarios_for_version(java_version: str) -> tuple[list[str], list[str]]:
-    http = ["products", "transform", "aggregate-platform"]
-    memory = ["products", "transform", "aggregate-platform"]
+def scenarios_for_version(java_version: str, include_mixed_workload: bool) -> tuple[list[str], list[str]]:
+    http = ["products", "products-db", "transform", "aggregate-platform"]
+    memory = ["products", "products-db", "transform", "aggregate-platform"]
 
     if java_version in {"21", "25"}:
         http.append("aggregate-virtual")
         memory.append("aggregate-virtual")
 
+    if include_mixed_workload:
+        http.append("mixed-workload")
+
     return http, memory
 
 
-def task_plan(versions: Iterable[str], include_gc: bool) -> list[str]:
+def task_plan(versions: Iterable[str], *, include_gc: bool, skip_jmh: bool) -> list[str]:
     tasks: list[str] = []
     for version in versions:
-        tasks.append(f"JMH Java {version}")
+        if not skip_jmh:
+            tasks.append(f"JMH Java {version}")
         tasks.append(f"Startup Java {version}")
         tasks.append(f"HTTP suite Java {version}")
         tasks.append(f"Memory suite Java {version}")
@@ -394,9 +464,11 @@ def task_plan(versions: Iterable[str], include_gc: bool) -> list[str]:
         [
             "Aggregate startup results",
             "Aggregate HTTP results",
+            "Aggregate concurrency results",
             "Aggregate memory results",
             "Generate startup chart",
             "Generate Quarkus charts",
+            "Generate concurrency charts",
         ]
     )
     return tasks
@@ -444,6 +516,17 @@ def main() -> int:
         help="HTTP benchmark virtual users. Default: 10",
     )
     parser.add_argument(
+        "--memory-duration",
+        default="20s",
+        help="Memory benchmark duration. Default: 20s",
+    )
+    parser.add_argument(
+        "--memory-vus",
+        type=int,
+        default=20,
+        help="Memory benchmark virtual users. Default: 20",
+    )
+    parser.add_argument(
         "--port",
         type=int,
         default=8080,
@@ -465,6 +548,22 @@ def main() -> int:
         action="store_true",
         help="Also run the GC suite for each Java version.",
     )
+    parser.add_argument(
+        "--skip-jmh",
+        action="store_true",
+        help="Skip the JMH suite and only run Quarkus app benchmarks.",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=["stock", "tuned"],
+        default="stock",
+        help="Benchmark profile config to use for app-based runs. Default: stock",
+    )
+    parser.add_argument(
+        "--include-mixed-workload",
+        action="store_true",
+        help="Also run the weighted mixed-workload HTTP scenario.",
+    )
     args = parser.parse_args()
 
     logger, run_timestamp, log_path = create_run_logger()
@@ -480,24 +579,34 @@ def main() -> int:
             if version not in {"17", "21", "25"}:
                 raise RuntimeError(f"Unsupported Java version: {version}")
 
-        all_tasks = task_plan(versions, args.with_gc_suite)
+        all_tasks = task_plan(
+            versions,
+            include_gc=args.with_gc_suite,
+            skip_jmh=args.skip_jmh,
+        )
         total_tasks = len(all_tasks)
         completed_tasks = 0
 
         logger.section("RUN CONFIGURATION")
         logger.write_line(f"Versions: {', '.join(versions)}")
+        logger.write_line(f"Profile: {args.profile}")
         logger.write_line(f"Startup repetitions: {args.startup_repetitions}")
         logger.write_line(f"HTTP duration: {args.http_duration}")
         logger.write_line(f"HTTP VUs: {args.http_vus}")
+        logger.write_line(f"Memory duration: {args.memory_duration}")
+        logger.write_line(f"Memory VUs: {args.memory_vus}")
         logger.write_line(f"Port: {args.port}")
-        logger.write_line(f"Memory port: {args.memory-port if False else args.memory_port}")
+        logger.write_line(f"Memory port: {args.memory_port}")
         logger.write_line(f"Heap info: {args.heap_info}")
         logger.write_line(f"With GC suite: {args.with_gc_suite}")
+        logger.write_line(f"Skip JMH: {args.skip_jmh}")
+        logger.write_line(f"Include mixed workload: {args.include_mixed_workload}")
         logger.write_line()
 
         note(f"Planned tasks: {total_tasks}", force_console=True)
 
-        with Progress(
+        progress_context = (
+            Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(bar_width=32),
@@ -506,13 +615,22 @@ def main() -> int:
                 TimeElapsedColumn(),
                 console=RICH_CONSOLE,
                 transient=False,
-        ) as progress:
-            LIVE_PROGRESS_ACTIVE = True
+            )
+            if HAS_RICH and Progress is not None
+            else nullcontext(None)
+        )
 
-            task_id = progress.add_task(
-                description="Initializing benchmark lab",
-                total=total_tasks,
-                completed=0,
+        with progress_context as progress:
+            LIVE_PROGRESS_ACTIVE = progress is not None
+
+            task_id = (
+                progress.add_task(
+                    description="Initializing benchmark lab",
+                    total=total_tasks,
+                    completed=0,
+                )
+                if progress is not None
+                else None
             )
 
             def step(task_label: str) -> None:
@@ -527,25 +645,37 @@ def main() -> int:
                 )
 
             for version in versions:
+                profile = load_profile_config(version, args.profile)
                 env = build_env(version)
-                http_scenarios, memory_scenarios = scenarios_for_version(version)
+                runtime_env = build_runtime_env(version, profile)
+                http_scenarios, memory_scenarios = scenarios_for_version(version, args.include_mixed_workload)
 
-                prep_message = f"Preparing Java {version} benchmark flow"
+                requires_database = any(
+                    scenario in {"products-db", "mixed-workload"}
+                    for scenario in (*http_scenarios, *memory_scenarios)
+                )
+                if requires_database and not runtime_env.get("BENCHMARK_DATASOURCE_URL"):
+                    raise RuntimeError(
+                        f"Profile '{profile.name}' for Java {version} requires BENCHMARK_DATASOURCE_URL for DB-backed scenarios."
+                    )
+
+                prep_message = f"Preparing Java {version} ({profile.name}) benchmark flow"
                 set_progress_message(progress, task_id, completed_tasks, total_tasks, prep_message)
                 note(prep_message)
 
-                run_command(
-                    ["bash", str(RUNNERS_DIR / "run_jmh_suite.sh"), version],
-                    env=env,
-                    label=f"JMH microbenchmarks for Java {version}",
-                    progress=progress,
-                    task_id=task_id,
-                    completed_tasks=completed_tasks,
-                    total_tasks=total_tasks,
-                )
-                step(f"JMH Java {version}")
+                if not args.skip_jmh:
+                    run_command(
+                        ["bash", str(RUNNERS_DIR / "run_jmh_suite.sh"), version],
+                        env=env,
+                        label=f"JMH microbenchmarks for Java {version}",
+                        progress=progress,
+                        task_id=task_id,
+                        completed_tasks=completed_tasks,
+                        total_tasks=total_tasks,
+                    )
+                    step(f"JMH Java {version}")
 
-                startup_env = {**env, "PORT": str(args.port)}
+                startup_env = build_runtime_env(version, profile, {"PORT": str(args.port)})
                 run_command(
                     [
                         "bash",
@@ -554,7 +684,7 @@ def main() -> int:
                         str(args.startup_repetitions),
                     ],
                     env=startup_env,
-                    label=f"Startup benchmark for Java {version}",
+                    label=f"Startup benchmark for Java {version} ({profile.name})",
                     progress=progress,
                     task_id=task_id,
                     completed_tasks=completed_tasks,
@@ -567,6 +697,7 @@ def main() -> int:
                 try:
                     process, app_log_handle, _ = start_quarkus_app(
                         version,
+                        profile,
                         args.port,
                         progress=progress,
                         task_id=task_id,
@@ -584,8 +715,8 @@ def main() -> int:
                                 args.http_duration,
                                 str(args.http_vus),
                             ],
-                            env={**env, "PORT": str(args.port)},
-                            label=f"HTTP {scenario} on Java {version}",
+                            env=build_runtime_env(version, profile, {"PORT": str(args.port)}),
+                            label=f"HTTP {scenario} on Java {version} ({profile.name})",
                             progress=progress,
                             task_id=task_id,
                             completed_tasks=completed_tasks,
@@ -598,7 +729,15 @@ def main() -> int:
                 step(f"HTTP suite Java {version}")
 
                 for scenario in memory_scenarios:
-                    mem_env = {**env, "PORT": str(args.memory_port)}
+                    mem_env = build_runtime_env(
+                        version,
+                        profile,
+                        {
+                            "PORT": str(args.memory_port),
+                            "DURATION": args.memory_duration,
+                            "VUS": str(args.memory_vus),
+                        },
+                    )
                     if args.heap_info:
                         mem_env["HEAP_INFO"] = "true"
 
@@ -610,7 +749,7 @@ def main() -> int:
                             scenario,
                         ],
                         env=mem_env,
-                        label=f"Memory {scenario} on Java {version}",
+                        label=f"Memory {scenario} on Java {version} ({profile.name})",
                         progress=progress,
                         task_id=task_id,
                         completed_tasks=completed_tasks,
@@ -652,6 +791,16 @@ def main() -> int:
             step("Aggregate HTTP results")
 
             run_command(
+                ["python3", str(AGGREGATORS_DIR / "aggregate_concurrency_results.py")],
+                label="Aggregating concurrency results",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Aggregate concurrency results")
+
+            run_command(
                 ["python3", str(AGGREGATORS_DIR / "aggregate_memory_results.py")],
                 label="Aggregating memory results",
                 progress=progress,
@@ -680,6 +829,16 @@ def main() -> int:
                 total_tasks=total_tasks,
             )
             step("Generate Quarkus charts")
+
+            run_command(
+                ["python3", str(CHARTS_DIR / "generate_concurrency_charts.py")],
+                label="Generating concurrency charts",
+                progress=progress,
+                task_id=task_id,
+                completed_tasks=completed_tasks,
+                total_tasks=total_tasks,
+            )
+            step("Generate concurrency charts")
 
             set_progress_message(
                 progress,

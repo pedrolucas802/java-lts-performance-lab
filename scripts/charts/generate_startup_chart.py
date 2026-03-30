@@ -39,25 +39,39 @@ def main() -> int:
         )
         return 1
 
-    # average repeated runs by Java version
-    grouped = (
-        df.groupby("java_version", as_index=False)["external_startup_ms"]
-        .mean()
-        .sort_values("java_version")
-    )
-
     OUTPUT_PNG.parent.mkdir(parents=True, exist_ok=True)
+    profile_column = "profile" if "profile" in df.columns else None
+    profiles = (
+        sorted(df[profile_column].dropna().unique(), key=lambda name: (name != "stock", name))
+        if profile_column else ["stock"]
+    )
+    default_profile = "stock" if "stock" in profiles else profiles[0]
 
-    plt.figure(figsize=(8, 5))
-    plt.bar(grouped["java_version"].astype(str), grouped["external_startup_ms"])
-    plt.xlabel("Java Version")
-    plt.ylabel("External Startup Time (ms)")
-    plt.title("Quarkus Startup Comparison")
-    plt.tight_layout()
-    plt.savefig(OUTPUT_PNG, dpi=200)
-    plt.close()
+    generated_outputs = []
+    for profile in profiles:
+        profile_df = df if profile_column is None else df[df[profile_column] == profile]
+        grouped = (
+            profile_df.groupby("java_version", as_index=False)["external_startup_ms"]
+            .mean()
+            .sort_values("java_version")
+        )
 
-    print(f"SUCCESS: Startup chart written to {OUTPUT_PNG}")
+        output_png = OUTPUT_PNG if profile == default_profile else OUTPUT_PNG.with_name(
+            f"{OUTPUT_PNG.stem}-{profile}{OUTPUT_PNG.suffix}"
+        )
+
+        plt.figure(figsize=(8, 5))
+        plt.bar(grouped["java_version"].astype(str), grouped["external_startup_ms"])
+        plt.xlabel("Java Version")
+        plt.ylabel("External Startup Time (ms)")
+        plt.title(f"Quarkus Startup Comparison ({profile})")
+        plt.tight_layout()
+        plt.savefig(output_png, dpi=200)
+        plt.close()
+        generated_outputs.append(output_png)
+
+    for output in generated_outputs:
+        print(f"SUCCESS: Startup chart written to {output}")
     return 0
 
 

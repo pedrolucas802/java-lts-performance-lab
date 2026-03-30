@@ -1,30 +1,35 @@
-.PHONY: help jmh quarkus gc charts clean
+.PHONY: help jmh startup charts clean aggregate full-lab
 
 JAVA_VERSION ?= 21
+PROFILE ?= stock
+INCLUDE_MIXED ?= false
 
 help:
 	@echo "Available targets:"
 	@echo "  make jmh"
-	@echo "  make quarkus"
-	@echo "  make gc"
+	@echo "  make startup"
+	@echo "  make aggregate"
 	@echo "  make charts"
+	@echo "  make full-lab"
 	@echo "  make clean"
 
 jmh:
-	mvn -pl jmh-benchmarks clean package -Djava.release=$(JAVA_VERSION)
-	java -jar jmh-benchmarks/target/jmh-benchmarks.jar -rf json -rff results/raw/java$(JAVA_VERSION)/jmh/json-serialization-baseline.json
+	bash scripts/runners/run_jmh_suite.sh $(JAVA_VERSION)
 
-quarkus:
-	./scripts/run_quarkus_startup_benchmark.sh $(JAVA_VERSION)
-
-gc:
-	@echo "GC benchmark suite not implemented yet."
+startup:
+	BENCHMARK_PROFILE=$(PROFILE) bash scripts/runners/run_quarkus_startup_benchmark.sh $(JAVA_VERSION) 3
 
 charts:
-	@echo "Chart generation not implemented yet."
+	python3 scripts/charts/generate_startup_chart.py
+	python3 scripts/charts/generate_quarkus_charts.py
 
 clean:
 	find . -name target -type d -exec rm -rf {} +
 
 aggregate:
-	python3 scripts/aggregate_quarkus_results.py
+	python3 scripts/aggregators/aggregate_startup_results.py
+	python3 scripts/aggregators/aggregate_quarkus_results.py
+	python3 scripts/aggregators/aggregate_memory_results.py
+
+full-lab:
+	python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile $(PROFILE) $(if $(filter true,$(INCLUDE_MIXED)),--include-mixed-workload,)

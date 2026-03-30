@@ -4,6 +4,8 @@ import json
 import sys
 from pathlib import Path
 
+from result_metadata import iter_track_dirs, scenario_metadata
+
 
 # Constants
 RESULTS_ROOT = Path("results/raw")
@@ -64,14 +66,18 @@ def collect_rows() -> list[dict]:
     """Collect all startup result rows."""
     rows: list[dict] = []
 
-    for java_dir in sorted(RESULTS_ROOT.glob("java*/quarkus")):
-        java_version = java_dir.parent.name.replace("java", "")
-
+    for profile, java_version, java_dir in iter_track_dirs(RESULTS_ROOT, "quarkus"):
         for file_path in sorted(java_dir.glob("startup-java*.txt")):
             parsed = parse_key_value_file(file_path)
+            metadata = scenario_metadata(parsed.get("scenario", "startup"), "startup")
 
             rows.append({
                 "java_version": java_version,
+                "scenario": metadata["scenario"],
+                "profile": parsed.get("profile", profile),
+                "thread_mode": metadata["thread_mode"],
+                "db_mode": metadata["db_mode"],
+                "run_class": metadata["run_class"],
                 "run_number": int(parsed.get("run_number", "1")),
                 "external_startup_ms": int(parsed.get("external_startup_ms", parsed.get("startup_ms", "0"))),
                 "quarkus_startup_ms": int(parsed.get("quarkus_startup_ms", "0")) if parsed.get("quarkus_startup_ms") else None,
@@ -85,7 +91,20 @@ def collect_rows() -> list[dict]:
 
 def write_csv(rows: list[dict], output_file: Path) -> None:
     """Write rows to CSV file."""
-    fieldnames = ["java_version", "run_number", "external_startup_ms", "quarkus_startup_ms", "port", "log_file", "source_file"]
+    fieldnames = [
+        "java_version",
+        "scenario",
+        "profile",
+        "thread_mode",
+        "db_mode",
+        "run_class",
+        "run_number",
+        "external_startup_ms",
+        "quarkus_startup_ms",
+        "port",
+        "log_file",
+        "source_file",
+    ]
     try:
         with output_file.open("w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
