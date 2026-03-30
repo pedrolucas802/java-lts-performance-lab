@@ -20,20 +20,20 @@ default   [  20% ] 2 VUs  1.0s/5s
 running (02.0s), 2/2 VUs, 38 complete and 0 interrupted iterations
 default   [  40% ] 2 VUs  2.0s/5s
 
-running (03.0s), 2/2 VUs, 56 complete and 0 interrupted iterations
+running (03.0s), 2/2 VUs, 58 complete and 0 interrupted iterations
 default   [  60% ] 2 VUs  3.0s/5s
 
-running (04.0s), 2/2 VUs, 76 complete and 0 interrupted iterations
+running (04.0s), 2/2 VUs, 78 complete and 0 interrupted iterations
 default   [  80% ] 2 VUs  4.0s/5s
 
-running (05.0s), 2/2 VUs, 94 complete and 0 interrupted iterations
+running (05.0s), 2/2 VUs, 96 complete and 0 interrupted iterations
 default   [ 100% ] 2 VUs  5s
 
 
   █ THRESHOLDS 
 
     http_req_duration
-    ✓ 'p(95)<500' p(95)=4.21ms
+    ✓ 'p(95)<500' p(95)=1.83ms
 
     http_req_failed
     ✓ 'rate<0.01' rate=0.00%
@@ -41,30 +41,30 @@ default   [ 100% ] 2 VUs  5s
 
   █ TOTAL RESULTS 
 
-    checks_total.......: 96      19.188798/s
-    checks_succeeded...: 100.00% 96 out of 96
-    checks_failed......: 0.00%   0 out of 96
+    checks_total.......: 98      19.536845/s
+    checks_succeeded...: 100.00% 98 out of 98
+    checks_failed......: 0.00%   0 out of 98
 
     ✓ status is 200
 
     HTTP
-    http_req_duration..............: avg=3.03ms   min=792µs   med=3.38ms   max=16.66ms  p(90)=3.97ms  p(95)=4.21ms  
-      { expected_response:true }...: avg=3.03ms   min=792µs   med=3.38ms   max=16.66ms  p(90)=3.97ms  p(95)=4.21ms  
-    http_req_failed................: 0.00% 0 out of 96
-    http_reqs......................: 96    19.188798/s
+    http_req_duration..............: avg=1.35ms   min=801µs    med=935µs    max=18.8ms   p(90)=1.1ms   p(95)=1.83ms  
+      { expected_response:true }...: avg=1.35ms   min=801µs    med=935µs    max=18.8ms   p(90)=1.1ms   p(95)=1.83ms  
+    http_req_failed................: 0.00% 0 out of 98
+    http_reqs......................: 98    19.536845/s
 
     EXECUTION
-    iteration_duration.............: avg=104.18ms min=101.4ms med=104.52ms max=118.85ms p(90)=105.3ms p(95)=105.69ms
-    iterations.....................: 96    19.188798/s
+    iteration_duration.............: avg=102.35ms min=101.12ms med=102.01ms max=121.08ms p(90)=102.2ms p(95)=102.92ms
+    iterations.....................: 98    19.536845/s
     vus............................: 2     min=2       max=2
     vus_max........................: 2     min=2       max=2
 
     NETWORK
-    data_received..................: 31 kB 6.2 kB/s
-    data_sent......................: 32 kB 6.4 kB/s
+    data_received..................: 32 kB 6.3 kB/s
+    data_sent......................: 33 kB 6.5 kB/s
 
 
 
 
-running (05.0s), 0/2 VUs, 96 complete and 0 interrupted iterations
+running (05.0s), 0/2 VUs, 98 complete and 0 interrupted iterations
 default ✓ [ 100% ] 2 VUs  5s

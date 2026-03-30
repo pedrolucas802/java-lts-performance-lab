@@ -1,0 +1,17 @@
+java_version=21
+profile=stock
+lane=macos-container
+host_os=darwin
+container_runtime=docker
+cpu_limit=2
+memory_limit_mb=2048
+loadgen_location=host
+app_location=container
+scenario=products-db
+idle_rss_kb=96983
+post_load_rss_kb=119398
+rss_delta_kb=22415
+pid=container:java-lts-lab-21-8081-1774911201
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/macos-container/java21/memory/products-db-memory-java21.log
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/macos-container/java21/memory/products-db-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/macos-container/java21/memory/products-db-k6.json

@@ -1,9 +1,9 @@
 java_version=21
 profile=stock
 scenario=transform
-idle_rss_kb=126528
-post_load_rss_kb=136656
-rss_delta_kb=10128
+idle_rss_kb=127472
+post_load_rss_kb=137552
+rss_delta_kb=10080
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/transform-memory-java21.log
 summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/transform-summary.txt
 k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/transform-k6.json

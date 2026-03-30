@@ -1,0 +1,70 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /Users/patriciarego/Desktop/dev/java-lts-performance-lab/infra/k6/aggregate.js
+        output: json (/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/concurrency/aggregate-platform-vus2-k6.json)
+
+     scenarios: (100.00%) 1 scenario, 2 max VUs, 35s max duration (incl. graceful stop):
+              * default: 2 looping VUs for 5s (gracefulStop: 30s)
+
+
+running (01.0s), 2/2 VUs, 26 complete and 0 interrupted iterations
+default   [  20% ] 2 VUs  1.0s/5s
+
+running (02.0s), 2/2 VUs, 58 complete and 0 interrupted iterations
+default   [  40% ] 2 VUs  2.0s/5s
+
+running (03.0s), 2/2 VUs, 90 complete and 0 interrupted iterations
+default   [  60% ] 2 VUs  3.0s/5s
+
+running (04.0s), 2/2 VUs, 122 complete and 0 interrupted iterations
+default   [  80% ] 2 VUs  4.0s/5s
+
+running (05.0s), 2/2 VUs, 154 complete and 0 interrupted iterations
+default ↓ [ 100% ] 2 VUs  5s
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✓ 'p(95)<1000' p(95)=15.26ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 156     31.00329/s
+    checks_succeeded...: 100.00% 156 out of 156
+    checks_failed......: 0.00%   0 out of 156
+
+    ✓ status is 200
+
+    HTTP
+    http_req_duration..............: avg=13.52ms min=4.83ms  med=12.08ms max=191.07ms p(90)=14.4ms  p(95)=15.26ms
+      { expected_response:true }...: avg=13.52ms min=4.83ms  med=12.08ms max=191.07ms p(90)=14.4ms  p(95)=15.26ms
+    http_req_failed................: 0.00% 0 out of 156
+    http_reqs......................: 156   31.00329/s
+
+    EXECUTION
+    iteration_duration.............: avg=64.47ms min=55.09ms med=63.12ms max=243.26ms p(90)=65.34ms p(95)=66.51ms
+    iterations.....................: 156   31.00329/s
+    vus............................: 2     min=2        max=2
+    vus_max........................: 2     min=2        max=2
+
+    NETWORK
+    data_received..................: 73 kB 15 kB/s
+    data_sent......................: 15 kB 2.9 kB/s
+
+
+
+
+running (05.0s), 0/2 VUs, 156 complete and 0 interrupted iterations
+default ✓ [ 100% ] 2 VUs  5s

@@ -1,0 +1,15 @@
+java_version=21
+profile=stock
+lane=linux-container
+host_os=darwin
+container_runtime=docker
+cpu_limit=2
+memory_limit_mb=2048
+loadgen_location=host
+app_location=container
+scenario=startup
+run_number=1
+external_startup_ms=872
+quarkus_startup_ms=468
+port=8080
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/quarkus/startup-java21-run1.log

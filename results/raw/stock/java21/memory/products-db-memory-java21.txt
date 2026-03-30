@@ -1,9 +1,9 @@
 java_version=21
 profile=stock
 scenario=products-db
-idle_rss_kb=125024
-post_load_rss_kb=200544
-rss_delta_kb=75520
+idle_rss_kb=125600
+post_load_rss_kb=199040
+rss_delta_kb=73440
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/products-db-memory-java21.log
 summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/products-db-summary.txt
 k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/products-db-k6.json

@@ -1,0 +1,15 @@
+java_version=21
+profile=stock
+lane=linux-container
+host_os=darwin
+container_runtime=docker
+cpu_limit=2
+memory_limit_mb=2048
+loadgen_location=host
+app_location=container
+scenario=aggregate-platform
+duration=5s
+vus=2
+port=8080
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/quarkus/aggregate-platform-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/quarkus/aggregate-platform-k6.json

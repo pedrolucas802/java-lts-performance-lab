@@ -1,0 +1,17 @@
+java_version=21
+profile=stock
+lane=linux-container
+host_os=darwin
+container_runtime=docker
+cpu_limit=2
+memory_limit_mb=2048
+loadgen_location=host
+app_location=container
+scenario=aggregate-virtual
+idle_rss_kb=95416
+post_load_rss_kb=127180
+rss_delta_kb=31764
+pid=container:java-lts-lab-21-8081-1774911424
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/memory/aggregate-virtual-memory-java21.log
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/memory/aggregate-virtual-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/linux-container/java21/memory/aggregate-virtual-k6.json
