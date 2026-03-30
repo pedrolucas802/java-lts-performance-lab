@@ -1,0 +1,6 @@
+java_version=25
+run_number=4
+external_startup_ms=451
+quarkus_startup_ms=245
+port=8080
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/quarkus/startup-java25-run4.log

@@ -1,6 +1,6 @@
 java_version=25
 run_number=1
-external_startup_ms=10
-quarkus_startup_ms=
+external_startup_ms=460
+quarkus_startup_ms=292
 port=8080
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/quarkus/startup-java25-run1.log

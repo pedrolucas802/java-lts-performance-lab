@@ -1,0 +1,11 @@
+java_version=21
+profile=stock
+scenario=aggregate-virtual
+thread_mode=virtual
+db_mode=jdbc
+run_class=concurrency
+vus=10
+duration=5s
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/concurrency/aggregate-virtual-vus10-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/concurrency/aggregate-virtual-vus10-k6.json
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/concurrency/app-concurrency-java21.log

@@ -1,0 +1,6 @@
+java_version=17
+run_number=5
+external_startup_ms=458
+quarkus_startup_ms=248
+port=8080
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/quarkus/startup-java17-run5.log

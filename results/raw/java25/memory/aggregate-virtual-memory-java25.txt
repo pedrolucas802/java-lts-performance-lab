@@ -1,8 +1,8 @@
 java_version=25
 scenario=aggregate-virtual
-idle_rss_kb=140560
-post_load_rss_kb=422128
-rss_delta_kb=281568
+idle_rss_kb=141104
+post_load_rss_kb=431408
+rss_delta_kb=290304
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-virtual-memory-java25.log
 summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-virtual-summary.txt
 k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java25/memory/aggregate-virtual-k6.json

@@ -10,45 +10,30 @@
         script: /Users/patriciarego/Desktop/dev/java-lts-performance-lab/infra/k6/aggregate.js
         output: json (/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java21/quarkus/aggregate-virtual-k6.json)
 
-     scenarios: (100.00%) 1 scenario, 50 max VUs, 40s max duration (incl. graceful stop):
-              * default: 50 looping VUs for 10s (gracefulStop: 30s)
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 35s max duration (incl. graceful stop):
+              * default: 50 looping VUs for 5s (gracefulStop: 30s)
 
 
 running (01.0s), 50/50 VUs, 500 complete and 0 interrupted iterations
-default   [  10% ] 50 VUs  01.0s/10s
+default   [  20% ] 50 VUs  1.0s/5s
 
 running (02.0s), 50/50 VUs, 1000 complete and 0 interrupted iterations
-default   [  20% ] 50 VUs  02.0s/10s
+default   [  40% ] 50 VUs  2.0s/5s
 
 running (03.0s), 50/50 VUs, 1550 complete and 0 interrupted iterations
-default   [  30% ] 50 VUs  03.0s/10s
+default   [  60% ] 50 VUs  3.0s/5s
 
 running (04.0s), 50/50 VUs, 2050 complete and 0 interrupted iterations
-default   [  40% ] 50 VUs  04.0s/10s
+default   [  80% ] 50 VUs  4.0s/5s
 
 running (05.0s), 50/50 VUs, 2600 complete and 0 interrupted iterations
-default   [  50% ] 50 VUs  05.0s/10s
-
-running (06.0s), 50/50 VUs, 3100 complete and 0 interrupted iterations
-default   [  60% ] 50 VUs  06.0s/10s
-
-running (07.0s), 50/50 VUs, 3650 complete and 0 interrupted iterations
-default   [  70% ] 50 VUs  07.0s/10s
-
-running (08.0s), 50/50 VUs, 4150 complete and 0 interrupted iterations
-default   [  80% ] 50 VUs  08.0s/10s
-
-running (09.0s), 50/50 VUs, 4700 complete and 0 interrupted iterations
-default   [  90% ] 50 VUs  09.0s/10s
-
-running (10.0s), 50/50 VUs, 5250 complete and 0 interrupted iterations
-default   [ 100% ] 50 VUs  10.0s/10s
+default   [ 100% ] 50 VUs  5.0s/5s
 
 
   █ THRESHOLDS 
 
     http_req_duration
-    ✓ 'p(95)<1000' p(95)=46.89ms
+    ✓ 'p(95)<1000' p(95)=46.54ms
 
     http_req_failed
     ✓ 'rate<0.01' rate=0.00%
@@ -56,30 +41,30 @@ default   [ 100% ] 50 VUs  10.0s/10s
 
   █ TOTAL RESULTS 
 
-    checks_total.......: 5300    527.260827/s
-    checks_succeeded...: 100.00% 5300 out of 5300
-    checks_failed......: 0.00%   0 out of 5300
+    checks_total.......: 2650    524.577547/s
+    checks_succeeded...: 100.00% 2650 out of 2650
+    checks_failed......: 0.00%   0 out of 2650
 
     ✓ status is 200
 
     HTTP
-    http_req_duration..............: avg=43.73ms min=40.39ms med=43.58ms max=57.06ms p(90)=45.72ms p(95)=46.89ms
-      { expected_response:true }...: avg=43.73ms min=40.39ms med=43.58ms max=57.06ms p(90)=45.72ms p(95)=46.89ms
-    http_req_failed................: 0.00%  0 out of 5300
-    http_reqs......................: 5300   527.260827/s
+    http_req_duration..............: avg=44.35ms min=40.29ms med=44.37ms max=52.04ms  p(90)=46.23ms p(95)=46.54ms
+      { expected_response:true }...: avg=44.35ms min=40.29ms med=44.37ms max=52.04ms  p(90)=46.23ms p(95)=46.54ms
+    http_req_failed................: 0.00%  0 out of 2650
+    http_reqs......................: 2650   524.577547/s
 
     EXECUTION
-    iteration_duration.............: avg=94.8ms  min=90.61ms med=94.58ms max=107.3ms p(90)=97.41ms p(95)=98.71ms
-    iterations.....................: 5300   527.260827/s
+    iteration_duration.............: avg=95.29ms min=90.6ms  med=95.46ms max=103.44ms p(90)=97.28ms p(95)=97.65ms
+    iterations.....................: 2650   524.577547/s
     vus............................: 50     min=50        max=50
     vus_max........................: 50     min=50        max=50
 
     NETWORK
-    data_received..................: 1.6 MB 155 kB/s
-    data_sent......................: 488 kB 49 kB/s
+    data_received..................: 777 kB 154 kB/s
+    data_sent......................: 244 kB 48 kB/s
 
 
 
 
-running (10.1s), 00/50 VUs, 5300 complete and 0 interrupted iterations
-default ✓ [ 100% ] 50 VUs  10s
+running (05.1s), 00/50 VUs, 2650 complete and 0 interrupted iterations
+default ✓ [ 100% ] 50 VUs  5s

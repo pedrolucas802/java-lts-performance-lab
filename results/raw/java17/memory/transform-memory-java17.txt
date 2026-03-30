@@ -1,8 +1,8 @@
 java_version=17
 scenario=transform
-idle_rss_kb=138096
-post_load_rss_kb=199168
-rss_delta_kb=61072
+idle_rss_kb=137152
+post_load_rss_kb=195120
+rss_delta_kb=57968
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/transform-memory-java17.log
 summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/transform-summary.txt
 k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/transform-k6.json

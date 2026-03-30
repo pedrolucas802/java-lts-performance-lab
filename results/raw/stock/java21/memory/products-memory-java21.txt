@@ -1,0 +1,9 @@
+java_version=21
+profile=stock
+scenario=products
+idle_rss_kb=125984
+post_load_rss_kb=144352
+rss_delta_kb=18368
+log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/products-memory-java21.log
+summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/products-summary.txt
+k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/stock/java21/memory/products-k6.json

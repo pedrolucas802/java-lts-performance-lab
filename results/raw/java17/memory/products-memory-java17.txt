@@ -1,8 +1,8 @@
 java_version=17
 scenario=products
-idle_rss_kb=137728
-post_load_rss_kb=229680
-rss_delta_kb=91952
+idle_rss_kb=127616
+post_load_rss_kb=233968
+rss_delta_kb=106352
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/products-memory-java17.log
 summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/products-summary.txt
 k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/products-k6.json

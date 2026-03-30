@@ -1,8 +1,8 @@
 java_version=17
 scenario=aggregate-platform
-idle_rss_kb=137168
-post_load_rss_kb=250928
-rss_delta_kb=113760
+idle_rss_kb=137680
+post_load_rss_kb=264816
+rss_delta_kb=127136
 log_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/aggregate-platform-memory-java17.log
 summary_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/aggregate-platform-summary.txt
 k6_json_file=/Users/patriciarego/Desktop/dev/java-lts-performance-lab/results/raw/java17/memory/aggregate-platform-k6.json
