@@ -201,10 +201,9 @@ Feature comparison focus:
 ### Next changes to land
 
 1. Expand JMH coverage so the benchmark matrix matches the documented JVM microbenchmark scope.
-2. Add structured GC logging, parsing, and `gc-summary.csv`.
-3. Add JFR capture and summarized runtime analysis for representative scenarios.
-4. Run the full comparison matrix under `stock`, then publish and review the first `tuned` result set.
-5. Define the Linux-based isolated lane for container-aware and CPU-sensitive claims.
+2. Run the full comparison matrix under `stock`, then publish and review the first `tuned` result set.
+3. Define the Linux-based isolated lane for container-aware and CPU-sensitive claims.
+4. Strengthen the observability suite with longer representative runs and publication-quality interpretation notes.
 
 ### Open questions for later milestones
 

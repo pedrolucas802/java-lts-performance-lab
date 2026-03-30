@@ -106,6 +106,7 @@ It now supports:
 - optional `mixed-workload` execution when explicitly enabled
 - profile-aware raw result storage under `results/raw/{profile}/`
 - dedicated concurrency summary and aggregate thread-mode charts
+- optional GC/JFR/CPU observability runs with processed `gc-summary.csv`, `cpu-summary.csv`, and `jfr-summary.csv`
 
 The smaller bash runners remain useful for targeted smoke tests and single-scenario reruns.
 
@@ -143,12 +144,12 @@ Current progress:
 - full benchmark runner promoted as the canonical orchestrator
 - startup benchmark pipeline working
 - HTTP load tests working
+- GC/JFR/CPU observability suite working
 - result aggregation scripts implemented
-- startup, HTTP, and concurrency chart generation implemented
+- startup, HTTP, concurrency, GC, and CPU chart generation implemented
 
 Next work focuses on:
 
-- virtual thread concurrency analysis
-- GC log analysis
-- JFR runtime profiling
+- tuned result publication
+- JMH scope expansion
 - containerized benchmarks

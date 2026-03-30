@@ -423,8 +423,10 @@ def stop_process(process: subprocess.Popen[str], log_handle: TextIO | None = Non
         log_handle.close()
 
 
-def validate_tools() -> None:
+def validate_tools(*, include_gc: bool) -> None:
     required = ["bash", "python3", "mvn", "k6"]
+    if include_gc:
+        required.append("jfr")
     missing = [tool for tool in required if which(tool) is None]
     if missing:
         raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
@@ -467,11 +469,33 @@ def task_plan(versions: Iterable[str], *, include_gc: bool, skip_jmh: bool) -> l
             "Aggregate HTTP results",
             "Aggregate concurrency results",
             "Aggregate memory results",
+        ]
+    )
+
+    if include_gc:
+        tasks.extend(
+            [
+                "Aggregate GC results",
+                "Aggregate CPU results",
+                "Aggregate JFR results",
+            ]
+        )
+
+    tasks.extend(
+        [
             "Generate startup chart",
             "Generate Quarkus charts",
             "Generate concurrency charts",
         ]
     )
+
+    if include_gc:
+        tasks.extend(
+            [
+                "Generate GC charts",
+                "Generate CPU charts",
+            ]
+        )
     return tasks
 
 
@@ -556,8 +580,26 @@ def main() -> int:
     )
     parser.add_argument(
         "--with-gc-suite",
+        "--with-observability-suite",
         action="store_true",
-        help="Also run the GC suite for each Java version.",
+        help="Also run the GC/JFR/CPU observability suite for each Java version.",
+    )
+    parser.add_argument(
+        "--gc-duration",
+        default="20s",
+        help="Observability suite duration per scenario. Default: 20s",
+    )
+    parser.add_argument(
+        "--gc-vus",
+        type=int,
+        default=10,
+        help="Observability suite virtual users per scenario. Default: 10",
+    )
+    parser.add_argument(
+        "--gc-port",
+        type=int,
+        default=8082,
+        help="Port for the GC/JFR/CPU observability suite. Default: 8082",
     )
     parser.add_argument(
         "--skip-jmh",
@@ -583,7 +625,7 @@ def main() -> int:
 
     try:
         info(f"Run log file: {log_path}", force_console=True)
-        validate_tools()
+        validate_tools(include_gc=args.with_gc_suite)
 
         versions = [str(v) for v in args.versions]
         for version in versions:
@@ -612,6 +654,9 @@ def main() -> int:
         logger.write_line(f"Memory port: {args.memory_port}")
         logger.write_line(f"Heap info: {args.heap_info}")
         logger.write_line(f"With GC suite: {args.with_gc_suite}")
+        logger.write_line(f"GC duration: {args.gc_duration}")
+        logger.write_line(f"GC VUs: {args.gc_vus}")
+        logger.write_line(f"GC port: {args.gc_port}")
         logger.write_line(f"Skip JMH: {args.skip_jmh}")
         logger.write_line(f"Include mixed workload: {args.include_mixed_workload}")
         logger.write_line()
@@ -790,9 +835,15 @@ def main() -> int:
 
                 if args.with_gc_suite:
                     run_command(
-                        ["bash", str(RUNNERS_DIR / "run_gc_suite.sh"), version],
-                        env=env,
-                        label=f"GC suite for Java {version}",
+                        [
+                            "bash",
+                            str(RUNNERS_DIR / "run_gc_suite.sh"),
+                            version,
+                            args.gc_duration,
+                            str(args.gc_vus),
+                        ],
+                        env=build_runtime_env(version, profile, {"PORT": str(args.gc_port)}),
+                        label=f"GC/JFR/CPU suite for Java {version} ({profile.name})",
                         progress=progress,
                         task_id=task_id,
                         completed_tasks=completed_tasks,
@@ -840,6 +891,37 @@ def main() -> int:
             )
             step("Aggregate memory results")
 
+            if args.with_gc_suite:
+                run_command(
+                    ["python3", str(AGGREGATORS_DIR / "aggregate_gc_results.py")],
+                    label="Aggregating GC results",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step("Aggregate GC results")
+
+                run_command(
+                    ["python3", str(AGGREGATORS_DIR / "aggregate_cpu_results.py")],
+                    label="Aggregating CPU results",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step("Aggregate CPU results")
+
+                run_command(
+                    ["python3", str(AGGREGATORS_DIR / "aggregate_jfr_results.py")],
+                    label="Aggregating JFR results",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step("Aggregate JFR results")
+
             run_command(
                 ["python3", str(CHARTS_DIR / "generate_startup_chart.py")],
                 label="Generating startup chart",
@@ -869,6 +951,27 @@ def main() -> int:
                 total_tasks=total_tasks,
             )
             step("Generate concurrency charts")
+
+            if args.with_gc_suite:
+                run_command(
+                    ["python3", str(CHARTS_DIR / "generate_gc_charts.py")],
+                    label="Generating GC charts",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step("Generate GC charts")
+
+                run_command(
+                    ["python3", str(CHARTS_DIR / "generate_cpu_charts.py")],
+                    label="Generating CPU charts",
+                    progress=progress,
+                    task_id=task_id,
+                    completed_tasks=completed_tasks,
+                    total_tasks=total_tasks,
+                )
+                step("Generate CPU charts")
 
             set_progress_message(
                 progress,

@@ -23,10 +23,13 @@ export BENCHMARK_DATASOURCE_PASSWORD=benchmark
 # 3. Run the full benchmark lab (primary path)
 python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile stock
 
-# 4. Optional tuned run
+# 4. Optional observability run
+python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --profile stock --with-observability-suite
+
+# 5. Optional tuned run
 python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile tuned
 
-# 5. Optional mixed-workload run
+# 6. Optional mixed-workload run
 python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --profile stock --include-mixed-workload
 
 # Confidence Levels
@@ -66,13 +69,21 @@ BENCHMARK_PROFILE=stock bash scripts/runners/run_quarkus_memory_benchmark.sh 21 
 # 6. Run the dedicated concurrency ramp study
 BENCHMARK_PROFILE=stock bash scripts/runners/run_concurrency_study.sh 21 20s 2,10,25,50
 
-# 7. Aggregate results
+# 7. Run the observability suite directly
+BENCHMARK_PROFILE=stock bash scripts/runners/run_gc_suite.sh 21 20s 10
+
+# 8. Aggregate results
 python3 scripts/aggregators/aggregate_quarkus_results.py
 python3 scripts/aggregators/aggregate_startup_results.py
 python3 scripts/aggregators/aggregate_concurrency_results.py
 python3 scripts/aggregators/aggregate_memory_results.py
+python3 scripts/aggregators/aggregate_gc_results.py
+python3 scripts/aggregators/aggregate_cpu_results.py
+python3 scripts/aggregators/aggregate_jfr_results.py
 
-# 8. Generate charts
+# 9. Generate charts
 python3 scripts/charts/generate_startup_chart.py
 python3 scripts/charts/generate_quarkus_charts.py
 python3 scripts/charts/generate_concurrency_charts.py
+python3 scripts/charts/generate_gc_charts.py
+python3 scripts/charts/generate_cpu_charts.py

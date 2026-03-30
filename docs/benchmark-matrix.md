@@ -135,6 +135,7 @@ Startup measurement infrastructure is operational, though the methodology will c
 
 - `memory-summary.csv`
 - `gc-summary.csv`
+- `cpu-summary.csv`
 - per-version GC logs
 
 ### Current Progress
@@ -143,11 +144,10 @@ Implemented:
 
 - memory benchmark script
 - memory aggregation pipeline
-
-Planned improvements:
-
-- deeper GC log parsing
-- GC pause distribution analysis
+- structured GC/JFR/CPU observability suite
+- `gc-summary.csv` aggregation from unified GC logs
+- `cpu-summary.csv` aggregation from per-run CPU timelines
+- GC pause comparison charts
 
 ---
 
@@ -208,13 +208,21 @@ Upcoming experiments will compare:
 ### Artifacts
 
 - `.jfr` recordings
-- summarized analysis in `/docs`
+- `jfr-summary.csv`
+- summarized hotspot fields in processed results
 
 ### Current Progress
 
-Infrastructure prepared for capturing JFR recordings.
+Implemented:
 
-Detailed runtime analysis will be incorporated in later experiments.
+- JFR capture during the observability suite
+- extracted execution-sample and allocation-sample summaries
+- processed `jfr-summary.csv` output with top methods, allocation hotspots, and thread-event counts
+
+Next refinements:
+
+- longer representative runs to reduce startup noise in JFR samples
+- deeper interpretation of pinning and parking behavior under heavier concurrency
 
 ---
 

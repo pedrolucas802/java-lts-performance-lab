@@ -69,6 +69,12 @@ Future experiments may introduce controlled variations such as:
 - container memory limits
 - additional JFR profiling flags
 
+The current observability suite adds:
+
+- unified GC logging with `-Xlog:gc*,safepoint`
+- JFR capture with `settings=profile`
+- one-second CPU and RSS timeline sampling during representative load runs
+
 ---
 
 # Benchmark Execution Strategy
