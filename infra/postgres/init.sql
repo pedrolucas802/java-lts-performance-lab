@@ -1,3 +1,5 @@
+-- Seed a larger deterministic catalog so full-lab runs exercise real JSON payloads
+-- and JDBC scans without relying on tiny toy datasets.
 CREATE TABLE IF NOT EXISTS benchmark_products (
     id BIGINT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -34,5 +36,5 @@ SELECT
     'tag-' || (series_id % 4),
     'tag-' || (series_id % 6),
     'tag-' || (series_id % 8)
-FROM generate_series(1, 5000) AS series_id
+FROM generate_series(1, 50000) AS series_id
 ON CONFLICT (id) DO NOTHING;

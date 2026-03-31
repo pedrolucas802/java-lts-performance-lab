@@ -24,6 +24,8 @@ import java.util.concurrent.Executors;
 @ApplicationScoped
 public class AggregateService {
 
+    private static final long DATASET_MAX_ID = 50_000;
+
     private static final String COUNT_SQL = """
             SELECT COUNT(*)
             FROM benchmark_products
@@ -95,10 +97,10 @@ public class AggregateService {
         dataSourceService.requireConfigured();
 
         List<Callable<String>> tasks = List.of(
-                () -> runJdbcAggregateTask("jdbc-slice-a", 1, 1250),
-                () -> runJdbcAggregateTask("jdbc-slice-b", 1251, 2500),
-                () -> runJdbcAggregateTask("jdbc-slice-c", 2501, 3750),
-                () -> runJdbcAggregateTask("jdbc-slice-d", 3751, 5000)
+                () -> runJdbcAggregateTask("jdbc-slice-a", 1, 12_500),
+                () -> runJdbcAggregateTask("jdbc-slice-b", 12_501, 25_000),
+                () -> runJdbcAggregateTask("jdbc-slice-c", 25_001, 37_500),
+                () -> runJdbcAggregateTask("jdbc-slice-d", 37_501, DATASET_MAX_ID)
         );
 
         List<String> completed = new ArrayList<>();

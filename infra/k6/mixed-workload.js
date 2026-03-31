@@ -11,15 +11,29 @@ export const options = {
 };
 
 const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+const productCount = Number(__ENV.PRODUCT_COUNT || 100);
+const transformItemCount = Number(__ENV.TRANSFORM_ITEM_COUNT || 5);
+const transformMetadataCount = Number(__ENV.TRANSFORM_METADATA_COUNT || 3);
+const thinkTimeSeconds = Number(__ENV.THINK_TIME_SECONDS || 0.05);
+
+function buildItems(count) {
+  return Array.from({ length: count }, (_, index) => ` Mixed Item ${index + 1} `);
+}
+
+function buildMetadata(count) {
+  return Object.fromEntries(
+    Array.from({ length: count }, (_, index) => [
+      ` Mixed Meta ${index + 1} `,
+      ` Mixed Value ${index + 1} `,
+    ]),
+  );
+}
 
 const transformPayload = JSON.stringify({
   requestId: 'mixed-req-123',
   customerName: '  Benchmark User  ',
-  items: [' Item A ', 'Item B', 'ITEM C '],
-  metadata: {
-    ' Region ': ' Brazil ',
-    ' Segment ': ' Platform ',
-  },
+  items: buildItems(transformItemCount),
+  metadata: buildMetadata(transformMetadataCount),
 });
 
 const transformParams = {
@@ -33,9 +47,9 @@ export default function () {
   let response;
 
   if (roll < 0.5) {
-    response = http.get(`${baseUrl}/products?count=100`);
+    response = http.get(`${baseUrl}/products?count=${productCount}`);
   } else if (roll < 0.7) {
-    response = http.get(`${baseUrl}/products-db?count=100`);
+    response = http.get(`${baseUrl}/products-db?count=${productCount}`);
   } else if (roll < 0.9) {
     response = http.post(`${baseUrl}/transform`, transformPayload, transformParams);
   } else {
@@ -46,5 +60,5 @@ export default function () {
     'status is 200': (r) => r.status === 200,
   });
 
-  sleep(0.05);
+  sleep(thinkTimeSeconds);
 }

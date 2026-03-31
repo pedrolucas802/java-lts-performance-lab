@@ -11,16 +11,28 @@ export const options = {
 };
 
 const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+const transformItemCount = Number(__ENV.TRANSFORM_ITEM_COUNT || 5);
+const transformMetadataCount = Number(__ENV.TRANSFORM_METADATA_COUNT || 3);
+const thinkTimeSeconds = Number(__ENV.THINK_TIME_SECONDS || 0.1);
+
+function buildItems(count) {
+  return Array.from({ length: count }, (_, index) => ` Item ${index + 1} `);
+}
+
+function buildMetadata(count) {
+  return Object.fromEntries(
+    Array.from({ length: count }, (_, index) => [
+      ` Meta Key ${index + 1} `,
+      ` Meta Value ${index + 1} `,
+    ]),
+  );
+}
 
 const payload = JSON.stringify({
-  requestId: 'req-123',
-  customerName: '  Pedro Lucas  ',
-  items: [' Item A ', 'Item B', 'ITEM C ', ' item d ', 'ITEM E'],
-  metadata: {
-    ' Region ': ' Brazil ',
-    ' Segment ': ' Enterprise ',
-    ' Priority ': ' High ',
-  },
+  requestId: 'req-heavy-transform',
+  customerName: '  Pedro Lucas Benchmark User  ',
+  items: buildItems(transformItemCount),
+  metadata: buildMetadata(transformMetadataCount),
 });
 
 const params = {
@@ -36,5 +48,5 @@ export default function () {
     'status is 200': (r) => r.status === 200,
   });
 
-  sleep(0.1);
+  sleep(thinkTimeSeconds);
 }

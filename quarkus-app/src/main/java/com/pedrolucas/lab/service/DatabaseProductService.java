@@ -18,7 +18,7 @@ import java.util.Map;
 @ApplicationScoped
 public class DatabaseProductService {
 
-    private static final int MAX_COUNT = 500;
+    private static final int MAX_COUNT = 1000;
     private static final String PRODUCTS_SQL = """
             SELECT id, name, category, price, brand, region, segment, primary_tag, secondary_tag, tertiary_tag
             FROM benchmark_products

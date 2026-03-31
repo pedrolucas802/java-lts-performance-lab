@@ -12,6 +12,7 @@ export const options = {
 
 const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
 const mode = __ENV.AGG_MODE || 'platform';
+const aggregateThinkTimeSeconds = Number(__ENV.AGGREGATE_THINK_TIME_SECONDS || 0.05);
 
 export default function () {
   const res = http.get(`${baseUrl}/aggregate?mode=${mode}`);
@@ -20,5 +21,5 @@ export default function () {
     'status is 200': (r) => r.status === 200,
   });
 
-  sleep(0.05);
+  sleep(aggregateThinkTimeSeconds);
 }

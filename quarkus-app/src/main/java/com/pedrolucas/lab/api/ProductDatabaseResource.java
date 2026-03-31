@@ -20,7 +20,7 @@ public class ProductDatabaseResource {
     DatabaseProductService databaseProductService;
 
     @GET
-    public List<ProductDTO> getProducts(@QueryParam("count") @DefaultValue("100") int count) {
+    public List<ProductDTO> getProducts(@QueryParam("count") @DefaultValue("500") int count) {
         return databaseProductService.getProducts(count);
     }
 }

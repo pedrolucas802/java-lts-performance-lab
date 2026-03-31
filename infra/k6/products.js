@@ -11,13 +11,15 @@ export const options = {
 };
 
 const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+const productCount = Number(__ENV.PRODUCT_COUNT || 100);
+const thinkTimeSeconds = Number(__ENV.THINK_TIME_SECONDS || 0.1);
 
 export default function () {
-  const res = http.get(`${baseUrl}/products?count=100`);
+  const res = http.get(`${baseUrl}/products?count=${productCount}`);
 
   check(res, {
     'status is 200': (r) => r.status === 200,
   });
 
-  sleep(0.1);
+  sleep(thinkTimeSeconds);
 }

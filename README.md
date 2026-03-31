@@ -97,10 +97,11 @@ java-lts-performance-lab
 
 The primary benchmark entrypoint is:
 
-`python3 scripts/runners/run_full_benchmark_lab.py`
+`python3 scripts/runners/run_full_benchmark_lab.py --preset full-lab --versions 17 21 25 --lane macos-container`
 
 It now supports:
 
+- preset-driven runs with `smoke` and `full-lab`
 - lane configs under `config/benchmark-lanes/` with `macos-container` and `linux-container`
 - official HTTP scenarios for `products`, `products-db`, `transform`, `aggregate-platform`, and `aggregate-virtual`
 - optional `mixed-workload` execution when explicitly enabled

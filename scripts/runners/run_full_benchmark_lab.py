@@ -63,6 +63,72 @@ class BenchmarkLane:
     app_location: str
 
 
+@dataclass(frozen=True)
+class BenchmarkPreset:
+    name: str
+    description: str
+    startup_repetitions: int
+    http_duration: str
+    http_vus: int
+    memory_duration: str
+    memory_vus: int
+    concurrency_duration: str
+    concurrency_vus_list: str
+    gc_duration: str
+    gc_vus: int
+    include_gc_suite: bool
+    include_mixed_workload: bool
+    product_count: int
+    transform_item_count: int
+    transform_metadata_count: int
+    think_time_seconds: str
+    aggregate_think_time_seconds: str
+
+
+PRESETS: dict[str, BenchmarkPreset] = {
+    "smoke": BenchmarkPreset(
+        name="smoke",
+        description="Fast validation pass for local correctness checks.",
+        startup_repetitions=2,
+        http_duration="15s",
+        http_vus=10,
+        memory_duration="15s",
+        memory_vus=10,
+        concurrency_duration="15s",
+        concurrency_vus_list="2,10,25",
+        gc_duration="15s",
+        gc_vus=8,
+        include_gc_suite=False,
+        include_mixed_workload=False,
+        product_count=150,
+        transform_item_count=10,
+        transform_metadata_count=6,
+        think_time_seconds="0.08",
+        aggregate_think_time_seconds="0.05",
+    ),
+    "full-lab": BenchmarkPreset(
+        name="full-lab",
+        description="Publication-grade stock run with heavier request shapes and longer durations.",
+        startup_repetitions=5,
+        http_duration="60s",
+        http_vus=40,
+        memory_duration="45s",
+        memory_vus=30,
+        concurrency_duration="30s",
+        concurrency_vus_list="5,25,50,100",
+        gc_duration="30s",
+        gc_vus=20,
+        include_gc_suite=True,
+        include_mixed_workload=False,
+        product_count=500,
+        transform_item_count=24,
+        transform_metadata_count=12,
+        think_time_seconds="0.03",
+        aggregate_think_time_seconds="0.02",
+    ),
+}
+
+
 class RunLogger:
     def __init__(self, log_path: Path):
         self.log_path = log_path
@@ -221,6 +287,12 @@ def build_runtime_env(
     if extra_env:
         env.update(extra_env)
     return env
+
+
+def resolve_setting(value, preset_value):
+    if value is None:
+        return preset_value
+    return value
 
 
 def summarize_output(text: str, *, max_lines: int = 8) -> list[str]:
@@ -446,6 +518,12 @@ def main() -> int:
         description="Run the full Java LTS benchmark lab end-to-end."
     )
     parser.add_argument(
+        "--preset",
+        choices=sorted(PRESETS),
+        default="full-lab",
+        help="Execution preset. Default: full-lab",
+    )
+    parser.add_argument(
         "--versions",
         nargs="+",
         default=["17", "21", "25"],
@@ -454,40 +532,40 @@ def main() -> int:
     parser.add_argument(
         "--startup-repetitions",
         type=int,
-        default=3,
-        help="Number of startup repetitions per Java version. Default: 3",
+        default=None,
+        help="Number of startup repetitions per Java version. Default: preset-driven",
     )
     parser.add_argument(
         "--http-duration",
-        default="20s",
-        help="HTTP benchmark duration. Default: 20s",
+        default=None,
+        help="HTTP benchmark duration. Default: preset-driven",
     )
     parser.add_argument(
         "--http-vus",
         type=int,
-        default=10,
-        help="HTTP benchmark virtual users. Default: 10",
+        default=None,
+        help="HTTP benchmark virtual users. Default: preset-driven",
     )
     parser.add_argument(
         "--memory-duration",
-        default="20s",
-        help="Memory benchmark duration. Default: 20s",
+        default=None,
+        help="Memory benchmark duration. Default: preset-driven",
     )
     parser.add_argument(
         "--memory-vus",
         type=int,
-        default=20,
-        help="Memory benchmark virtual users. Default: 20",
+        default=None,
+        help="Memory benchmark virtual users. Default: preset-driven",
     )
     parser.add_argument(
         "--concurrency-duration",
-        default="20s",
-        help="Concurrency ramp duration per VU level. Default: 20s",
+        default=None,
+        help="Concurrency ramp duration per VU level. Default: preset-driven",
     )
     parser.add_argument(
         "--concurrency-vus-list",
-        default="2,10,25,50",
-        help="Comma-separated VU ramp list for the concurrency study. Default: 2,10,25,50",
+        default=None,
+        help="Comma-separated VU ramp list for the concurrency study. Default: preset-driven",
     )
     parser.add_argument(
         "--port",
@@ -509,19 +587,21 @@ def main() -> int:
     parser.add_argument(
         "--with-gc-suite",
         "--with-observability-suite",
-        action="store_true",
-        help="Also run the GC/JFR/CPU observability suite for each Java version.",
+        dest="with_gc_suite",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Also run the GC/JFR/CPU observability suite for each Java version. Default: preset-driven",
     )
     parser.add_argument(
         "--gc-duration",
-        default="20s",
-        help="Observability suite duration per scenario. Default: 20s",
+        default=None,
+        help="Observability suite duration per scenario. Default: preset-driven",
     )
     parser.add_argument(
         "--gc-vus",
         type=int,
-        default=10,
-        help="Observability suite virtual users per scenario. Default: 10",
+        default=None,
+        help="Observability suite virtual users per scenario. Default: preset-driven",
     )
     parser.add_argument(
         "--gc-port",
@@ -541,9 +621,38 @@ def main() -> int:
         help="Execution lane for app-based runs. Default is macos-container on macOS and linux-container elsewhere.",
     )
     parser.add_argument(
+        "--product-count",
+        type=int,
+        default=None,
+        help="Requested product count for products/products-db scenarios. Default: preset-driven",
+    )
+    parser.add_argument(
+        "--transform-item-count",
+        type=int,
+        default=None,
+        help="Number of items in transform requests. Default: preset-driven",
+    )
+    parser.add_argument(
+        "--transform-metadata-count",
+        type=int,
+        default=None,
+        help="Number of metadata keys in transform requests. Default: preset-driven",
+    )
+    parser.add_argument(
+        "--think-time-seconds",
+        default=None,
+        help="Client think time for products/products-db/transform/mixed scenarios. Default: preset-driven",
+    )
+    parser.add_argument(
+        "--aggregate-think-time-seconds",
+        default=None,
+        help="Client think time for aggregate scenarios. Default: preset-driven",
+    )
+    parser.add_argument(
         "--include-mixed-workload",
-        action="store_true",
-        help="Also run the weighted mixed-workload HTTP scenario.",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Also run the weighted mixed-workload HTTP scenario. Default: preset-driven",
     )
     args = parser.parse_args()
 
@@ -551,48 +660,86 @@ def main() -> int:
     RUN_LOGGER = logger
     RUN_TIMESTAMP = run_timestamp
 
+    preset = PRESETS[args.preset]
+    startup_repetitions = resolve_setting(args.startup_repetitions, preset.startup_repetitions)
+    http_duration = resolve_setting(args.http_duration, preset.http_duration)
+    http_vus = resolve_setting(args.http_vus, preset.http_vus)
+    memory_duration = resolve_setting(args.memory_duration, preset.memory_duration)
+    memory_vus = resolve_setting(args.memory_vus, preset.memory_vus)
+    concurrency_duration = resolve_setting(args.concurrency_duration, preset.concurrency_duration)
+    concurrency_vus_list = resolve_setting(args.concurrency_vus_list, preset.concurrency_vus_list)
+    with_gc_suite = resolve_setting(args.with_gc_suite, preset.include_gc_suite)
+    gc_duration = resolve_setting(args.gc_duration, preset.gc_duration)
+    gc_vus = resolve_setting(args.gc_vus, preset.gc_vus)
+    include_mixed_workload = resolve_setting(args.include_mixed_workload, preset.include_mixed_workload)
+    product_count = resolve_setting(args.product_count, preset.product_count)
+    transform_item_count = resolve_setting(args.transform_item_count, preset.transform_item_count)
+    transform_metadata_count = resolve_setting(
+        args.transform_metadata_count,
+        preset.transform_metadata_count,
+    )
+    think_time_seconds = resolve_setting(args.think_time_seconds, preset.think_time_seconds)
+    aggregate_think_time_seconds = resolve_setting(
+        args.aggregate_think_time_seconds,
+        preset.aggregate_think_time_seconds,
+    )
+
     try:
         info(f"Run log file: {log_path}", force_console=True)
-        validate_tools(include_gc=args.with_gc_suite, lane=args.lane)
+        validate_tools(include_gc=with_gc_suite, lane=args.lane)
 
         versions = [str(v) for v in args.versions]
         for version in versions:
             if version not in {"17", "21", "25"}:
                 raise RuntimeError(f"Unsupported Java version: {version}")
+        if product_count < 1:
+            raise RuntimeError("Product count must be a positive integer.")
+        if transform_item_count < 1:
+            raise RuntimeError("Transform item count must be a positive integer.")
+        if transform_metadata_count < 1:
+            raise RuntimeError("Transform metadata count must be a positive integer.")
 
         lane = load_lane_config(args.lane)
 
         all_tasks = task_plan(
             versions,
-            include_gc=args.with_gc_suite,
+            include_gc=with_gc_suite,
             skip_jmh=args.skip_jmh,
         )
         total_tasks = len(all_tasks)
         completed_tasks = 0
 
         logger.section("RUN CONFIGURATION")
+        logger.write_line(f"Preset: {preset.name}")
+        logger.write_line(f"Preset description: {preset.description}")
         logger.write_line(f"Versions: {', '.join(versions)}")
         logger.write_line(f"Lane: {lane.name}")
         logger.write_line(f"Lane description: {lane.description}")
-        logger.write_line(f"Startup repetitions: {args.startup_repetitions}")
-        logger.write_line(f"HTTP duration: {args.http_duration}")
-        logger.write_line(f"HTTP VUs: {args.http_vus}")
-        logger.write_line(f"Concurrency duration: {args.concurrency_duration}")
-        logger.write_line(f"Concurrency VU ramp: {args.concurrency_vus_list}")
-        logger.write_line(f"Memory duration: {args.memory_duration}")
-        logger.write_line(f"Memory VUs: {args.memory_vus}")
+        logger.write_line(f"Startup repetitions: {startup_repetitions}")
+        logger.write_line(f"HTTP duration: {http_duration}")
+        logger.write_line(f"HTTP VUs: {http_vus}")
+        logger.write_line(f"Concurrency duration: {concurrency_duration}")
+        logger.write_line(f"Concurrency VU ramp: {concurrency_vus_list}")
+        logger.write_line(f"Memory duration: {memory_duration}")
+        logger.write_line(f"Memory VUs: {memory_vus}")
         logger.write_line(f"Port: {args.port}")
         logger.write_line(f"Memory port: {args.memory_port}")
         logger.write_line(f"Heap info: {args.heap_info}")
-        logger.write_line(f"With GC suite: {args.with_gc_suite}")
-        logger.write_line(f"GC duration: {args.gc_duration}")
-        logger.write_line(f"GC VUs: {args.gc_vus}")
+        logger.write_line(f"With GC suite: {with_gc_suite}")
+        logger.write_line(f"GC duration: {gc_duration}")
+        logger.write_line(f"GC VUs: {gc_vus}")
         logger.write_line(f"GC port: {args.gc_port}")
         logger.write_line(f"Skip JMH: {args.skip_jmh}")
-        logger.write_line(f"Include mixed workload: {args.include_mixed_workload}")
+        logger.write_line(f"Include mixed workload: {include_mixed_workload}")
+        logger.write_line(f"Product count: {product_count}")
+        logger.write_line(f"Transform item count: {transform_item_count}")
+        logger.write_line(f"Transform metadata count: {transform_metadata_count}")
+        logger.write_line(f"Think time seconds: {think_time_seconds}")
+        logger.write_line(f"Aggregate think time seconds: {aggregate_think_time_seconds}")
         logger.write_line()
 
         note(f"Planned tasks: {total_tasks}", force_console=True)
+        note(f"Preset '{preset.name}': {preset.description}", force_console=True)
 
         progress_context = (
             Progress(
@@ -633,9 +780,17 @@ def main() -> int:
                     task_label,
                 )
 
-            for version in versions:
-                runtime_env = build_runtime_env(version, lane)
-                http_scenarios, memory_scenarios = scenarios_for_version(version, args.include_mixed_workload)
+            for version_index, version in enumerate(versions, start=1):
+                workload_env = {
+                    "PRODUCT_COUNT": str(product_count),
+                    "TRANSFORM_ITEM_COUNT": str(transform_item_count),
+                    "TRANSFORM_METADATA_COUNT": str(transform_metadata_count),
+                    "THINK_TIME_SECONDS": think_time_seconds,
+                    "AGGREGATE_THINK_TIME_SECONDS": aggregate_think_time_seconds,
+                }
+                runtime_env = build_runtime_env(version, lane, workload_env)
+                http_scenarios, memory_scenarios = scenarios_for_version(version, include_mixed_workload)
+                version_label = f"Java {version} ({version_index}/{len(versions)})"
 
                 requires_database = any(
                     scenario in {"products-db", "mixed-workload", "aggregate-platform", "aggregate-virtual"}
@@ -646,7 +801,7 @@ def main() -> int:
                         f"Java {version} requires BENCHMARK_DATASOURCE_URL for DB-backed scenarios."
                     )
 
-                prep_message = f"Preparing Java {version} benchmark flow"
+                prep_message = f"{version_label}: preparing benchmark flow"
                 set_progress_message(progress, task_id, completed_tasks, total_tasks, prep_message)
                 note(prep_message)
 
@@ -654,75 +809,80 @@ def main() -> int:
                     run_command(
                         ["bash", str(RUNNERS_DIR / "run_jmh_suite.sh"), version],
                         env=runtime_env,
-                        label=f"JMH microbenchmarks for Java {version}",
+                        label=f"{version_label}: JMH microbenchmarks",
                         progress=progress,
                         task_id=task_id,
                         completed_tasks=completed_tasks,
                         total_tasks=total_tasks,
                     )
-                    step(f"JMH Java {version}")
+                    step(f"{version_label}: JMH")
 
-                startup_env = build_runtime_env(version, lane, {"PORT": str(args.port)})
+                startup_env = build_runtime_env(
+                    version,
+                    lane,
+                    workload_env | {"PORT": str(args.port)},
+                )
                 run_command(
                     [
                         "bash",
                         str(RUNNERS_DIR / "run_quarkus_startup_benchmark.sh"),
                         version,
-                        str(args.startup_repetitions),
+                        str(startup_repetitions),
                     ],
                     env=startup_env,
-                    label=f"Startup benchmark for Java {version}",
+                    label=f"{version_label}: startup benchmark",
                     progress=progress,
                     task_id=task_id,
                     completed_tasks=completed_tasks,
                     total_tasks=total_tasks,
                 )
-                step(f"Startup Java {version}")
+                step(f"{version_label}: startup")
 
                 run_command(
                     [
                         "bash",
                         str(RUNNERS_DIR / "run_quarkus_suite.sh"),
                         version,
-                        args.http_duration,
-                        str(args.http_vus),
+                        http_duration,
+                        str(http_vus),
                         ",".join(http_scenarios),
                     ],
-                    env=build_runtime_env(version, lane, {"PORT": str(args.port)}),
-                    label=f"HTTP suite for Java {version} ({lane.name})",
+                    env=build_runtime_env(version, lane, workload_env | {"PORT": str(args.port)}),
+                    label=f"{version_label}: HTTP suite on {lane.name}",
                     progress=progress,
                     task_id=task_id,
                     completed_tasks=completed_tasks,
                     total_tasks=total_tasks,
                 )
 
-                step(f"HTTP suite Java {version}")
+                step(f"{version_label}: HTTP suite")
 
                 run_command(
                     [
                         "bash",
                         str(RUNNERS_DIR / "run_concurrency_study.sh"),
                         version,
-                        args.concurrency_duration,
-                        args.concurrency_vus_list,
+                        concurrency_duration,
+                        concurrency_vus_list,
                     ],
-                    env=build_runtime_env(version, lane, {"PORT": str(args.port)}),
-                    label=f"Concurrency study for Java {version}",
+                    env=build_runtime_env(version, lane, workload_env | {"PORT": str(args.port)}),
+                    label=f"{version_label}: concurrency study",
                     progress=progress,
                     task_id=task_id,
                     completed_tasks=completed_tasks,
                     total_tasks=total_tasks,
                 )
-                step(f"Concurrency study Java {version}")
+                step(f"{version_label}: concurrency study")
 
                 for scenario in memory_scenarios:
                     mem_env = build_runtime_env(
                         version,
                         lane,
-                        {
+                        workload_env
+                        | {
                             "PORT": str(args.memory_port),
-                            "DURATION": args.memory_duration,
-                            "VUS": str(args.memory_vus),
+                            "DURATION": memory_duration,
+                            "VUS": str(memory_vus),
                         },
                     )
                     if args.heap_info:
@@ -736,32 +896,32 @@ def main() -> int:
                             scenario,
                         ],
                         env=mem_env,
-                        label=f"Memory {scenario} on Java {version}",
+                        label=f"{version_label}: memory {scenario}",
                         progress=progress,
                         task_id=task_id,
                         completed_tasks=completed_tasks,
                         total_tasks=total_tasks,
                     )
 
-                step(f"Memory suite Java {version}")
+                step(f"{version_label}: memory suite")
 
-                if args.with_gc_suite:
+                if with_gc_suite:
                     run_command(
                         [
                             "bash",
                             str(RUNNERS_DIR / "run_gc_suite.sh"),
                             version,
-                            args.gc_duration,
-                            str(args.gc_vus),
+                            gc_duration,
+                            str(gc_vus),
                         ],
-                        env=build_runtime_env(version, lane, {"PORT": str(args.gc_port)}),
-                        label=f"GC/JFR/CPU suite for Java {version}",
+                        env=build_runtime_env(version, lane, workload_env | {"PORT": str(args.gc_port)}),
+                        label=f"{version_label}: GC/JFR/CPU suite",
                         progress=progress,
                         task_id=task_id,
                         completed_tasks=completed_tasks,
                         total_tasks=total_tasks,
                     )
-                    step(f"GC suite Java {version}")
+                    step(f"{version_label}: GC suite")
 
             run_command(
                 ["python3", str(AGGREGATORS_DIR / "aggregate_startup_results.py")],
@@ -803,7 +963,7 @@ def main() -> int:
             )
             step("Aggregate memory results")
 
-            if args.with_gc_suite:
+            if with_gc_suite:
                 run_command(
                     ["python3", str(AGGREGATORS_DIR / "aggregate_gc_results.py")],
                     label="Aggregating GC results",
@@ -864,7 +1024,7 @@ def main() -> int:
             )
             step("Generate concurrency charts")
 
-            if args.with_gc_suite:
+            if with_gc_suite:
                 run_command(
                     ["python3", str(CHARTS_DIR / "generate_gc_charts.py")],
                     label="Generating GC charts",
