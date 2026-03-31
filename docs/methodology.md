@@ -62,15 +62,13 @@ Typical configuration includes:
 - default garbage collector for the JDK
 - consistent heap settings when applicable
 - identical Quarkus application configuration
-- `stock` profile as the official publication path through M5
+- stock-only execution as the official publication path
 
 Future experiments may introduce controlled variations such as:
 
 - explicit GC selection
 - container memory limits
 - additional JFR profiling flags
-
-The profile system remains in the repo for later work, but `tuned` runs are deferred to M6 so the current benchmark story stays centered on raw Java-version behavior.
 
 The current observability suite adds:
 
@@ -155,7 +153,7 @@ Through M5, the official comparison path is `stock` plus an explicit lane. The r
 
 Raw benchmark data is stored under:
 
-`results/raw/{profile}/{lane}/javaXX/{track}/`
+`results/raw/stock/{lane}/javaXX/{track}/`
 
 Each benchmark run records:
 

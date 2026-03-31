@@ -7,8 +7,8 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 JAVA_VERSION="${1:-21}"
 DURATION="${2:-20s}"
 VUS="${3:-10}"
-BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_PROFILE="stock"
 BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 PORT="${PORT:-8082}"
@@ -35,7 +35,6 @@ Arguments:
     VUS             Virtual users per scenario [default: 10]
 
 Environment:
-    BENCHMARK_PROFILE             Result profile name [default: stock]
     APP_JVM_OPTS                  Extra JVM opts for the Quarkus app
     PORT                          Quarkus app port [default: 8082]
     CPU_SAMPLE_INTERVAL_SECONDS   CPU sampling interval [default: 1]
@@ -160,7 +159,6 @@ done
 
 info "Starting GC / JFR / CPU observability suite"
 info "Java version: ${JAVA_VERSION}"
-info "Profile: ${BENCHMARK_PROFILE}"
 info "Lane: ${BENCHMARK_LANE}"
 info "Duration: ${DURATION}"
 info "Virtual users: ${VUS}"

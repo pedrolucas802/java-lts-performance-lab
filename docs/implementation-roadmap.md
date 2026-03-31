@@ -12,7 +12,7 @@ This lab adapts those ideas to a different goal:
 - compare Java 17, 21, and 25 on the same application
 - compare platform threads and virtual threads where applicable
 - keep the official comparison stock-only through M5
-- defer the tuning study until M6 so the main question stays centered on Java-version performance
+- keep any tuning work as a future note so the main question stays centered on Java-version performance
 
 ## Comparison Matrix
 
@@ -27,8 +27,6 @@ Every milestone should preserve the same comparison matrix unless a row is inten
 | `25-virtual` | 25 | virtual | current Loom comparison |
 
 The official publication path through M5 uses `stock` only.
-
-The existing `tuned` profile stays in the repo, but it becomes a deferred M6 study rather than part of the near-term benchmark story.
 
 ## Milestones
 
@@ -163,7 +161,7 @@ Work:
 - introduce dual execution lanes:
   - `macos-container` for local comparative runs
   - `linux-container` for higher-confidence container-aware conclusions
-- write raw results under `results/raw/{profile}/{lane}/javaXX/{track}/`
+- write raw results under `results/raw/stock/{lane}/javaXX/{track}/`
 - add lane and container metadata to every processed output
 - generate lane-specific charts instead of creating a separate reporting format
 
@@ -177,27 +175,14 @@ Feature comparison focus:
 | Threads / concurrency / Loom | platform and virtual behavior under explicit CPU and memory limits |
 | JVM | higher-confidence stock Java-version comparisons in containerized lanes |
 
-### M6 - Deferred Tuning Study
+## Future Note
 
-Primary goal:
+Possible later work:
 
-- answer optional follow-up questions about tuning only after the stock Java-version story is stable
+- evaluate whether light tuning changes Java-version rankings
+- revisit whether light-tuning changes platform-vs-virtual comparisons in meaningful ways
 
-Work:
-
-- keep `stock` vs `tuned` profile support in the repo
-- publish controlled tuning profiles only after stock results are complete
-- measure whether tuning changes Java-version rankings or Loom trade-offs
-
-Feature comparison focus:
-
-| Area | M6 comparison goal |
-|---|---|
-| Garbage collector and memory | measure memory-vs-throughput trade-offs after controlled tuning |
-| CPU usage | measure throughput per core before and after tuning |
-| I/O | observe connection-pool and queueing effects under tuned settings |
-| Threads / concurrency / Loom | tuned platform-vs-virtual comparisons |
-| JVM | determine whether newer JDKs need less tuning or benefit differently from it |
+This is intentionally outside the current milestone plan.
 
 ## Immediate Backlog
 
@@ -206,11 +191,10 @@ Feature comparison focus:
 1. Expand JMH coverage so the benchmark matrix matches the documented JVM microbenchmark scope.
 2. Run the full comparison matrix under `stock` on `macos-container`, then repeat on `linux-container`.
 3. Strengthen the observability suite with longer representative runs and publication-quality interpretation notes.
-4. Keep the existing `tuned` profiles dormant until the stock Java-version story is complete.
 
 ### Open questions for later milestones
 
 - Should the main realistic I/O workload use JDBC, downstream HTTP fan-out, or both?
 - Should mixed-workload runs be weighted by request mix or time-sliced by scenario?
-- When M6 starts, should tuned runs standardize on one heap policy across all JDKs or preserve each JDK default first?
+- If tuning is revisited later, should it standardize on one heap policy across all JDKs or preserve each JDK default first?
 - Which final claims require Linux-only validation before publication?

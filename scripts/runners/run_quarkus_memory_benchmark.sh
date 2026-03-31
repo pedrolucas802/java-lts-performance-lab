@@ -8,8 +8,8 @@ JAVA_VERSION="${1:-21}"
 SCENARIO="${2:-products}"
 HEAP_INFO="${HEAP_INFO:-false}"
 VUS="${VUS:-20}"
-BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_PROFILE="stock"
 BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
@@ -55,7 +55,6 @@ fi
 info "Starting memory benchmark"
 info "Java version: ${JAVA_VERSION}"
 info "Scenario: ${SCENARIO}"
-info "Profile: ${BENCHMARK_PROFILE}"
 info "Lane: ${BENCHMARK_LANE}"
 info "Results directory: ${RESULTS_DIR}"
 

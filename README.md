@@ -87,7 +87,7 @@ java-lts-performance-lab
 │
 └── docs
     ├── methodology
-    ├── analysis notes
+    ├── runbook
     └── benchmark documentation
 ```
 
@@ -101,17 +101,16 @@ The primary benchmark entrypoint is:
 
 It now supports:
 
-- Java-specific `stock` and `tuned` profile configs under `config/benchmark-profiles/`
 - lane configs under `config/benchmark-lanes/` with `macos-container` and `linux-container`
 - official HTTP scenarios for `products`, `products-db`, `transform`, `aggregate-platform`, and `aggregate-virtual`
 - optional `mixed-workload` execution when explicitly enabled
-- profile-and-lane-aware raw result storage under `results/raw/{profile}/{lane}/`
+- lane-aware raw result storage under `results/raw/stock/{lane}/`
 - dedicated concurrency summary and aggregate thread-mode charts
 - optional GC/JFR/CPU observability runs with processed `gc-summary.csv`, `cpu-summary.csv`, and `jfr-summary.csv`
 
 The smaller bash runners remain useful for targeted smoke tests and single-scenario reruns.
 
-Through M5, the official publication path is `stock` only. The existing `tuned` profile support remains in the repo for a deferred M6 study.
+The project now stays intentionally focused on stock Java-version comparisons rather than optional tuning profiles.
 
 ---
 
@@ -143,7 +142,6 @@ Current progress:
 - Quarkus benchmark application implemented
 - DB-backed `products-db` scenario implemented as the primary real-I/O baseline
 - DB-backed aggregate fan-out implemented as the primary concurrency workload
-- profile-aware benchmark configs added for `stock` and `tuned` runs
 - lane-aware benchmark configs added for `macos-container` and `linux-container`
 - full benchmark runner promoted as the canonical orchestrator
 - startup benchmark pipeline working
@@ -156,4 +154,4 @@ Next work focuses on:
 
 - stock result publication across container lanes
 - JMH scope expansion
-- deferred M6 tuning study
+- code and documentation cleanup around the current stock-only workflow

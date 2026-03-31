@@ -260,7 +260,7 @@ Implemented:
 
 - dual execution lanes: `macos-container` and `linux-container`
 - canonical full-runner support for `--lane`
-- lane-aware raw result storage under `results/raw/{profile}/{lane}/javaXX/{track}/`
+- lane-aware raw result storage under `results/raw/stock/{lane}/javaXX/{track}/`
 - lane-aware processed summaries with `lane`, `host_os`, `container_runtime`, `cpu_limit`, `memory_limit_mb`, `loadgen_location`, and `app_location`
 - lane-specific chart output names so macOS and Linux runs do not collide
 

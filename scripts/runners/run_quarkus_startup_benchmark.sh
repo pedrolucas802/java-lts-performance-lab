@@ -11,8 +11,8 @@ COMMON_SH="${PROJECT_ROOT}/scripts/common.sh"
 # Default values
 JAVA_VERSION="${1:-21}"
 REPETITIONS="${2:-1}"
-BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_PROFILE="stock"
 BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
@@ -40,7 +40,7 @@ Examples:
     $0 21 3
     $0 17 5
 
-Outputs results to: results/raw/{profile}/{lane}/java{JAVA_VERSION}/quarkus/startup-java{JAVA_VERSION}-run*.txt
+Outputs results to: results/raw/stock/{lane}/java{JAVA_VERSION}/quarkus/startup-java{JAVA_VERSION}-run*.txt
 EOF
 }
 
@@ -64,7 +64,6 @@ mkdir -p "${RESULTS_DIR}"
 echo "INFO: Starting Quarkus startup benchmark"
 echo "INFO: Java version: ${JAVA_VERSION}"
 echo "INFO: Repetitions: ${REPETITIONS}"
-echo "INFO: Profile: ${BENCHMARK_PROFILE}"
 echo "INFO: Lane: ${BENCHMARK_LANE}"
 echo "INFO: Results directory: ${RESULTS_DIR}"
 

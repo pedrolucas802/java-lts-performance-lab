@@ -20,7 +20,6 @@ Arguments:
   VUS_LIST       Comma-separated VU ramp list [default: 2,10,25,50]
 
 Environment:
-  BENCHMARK_PROFILE   Output profile name [default: stock]
   APP_JVM_OPTS        Extra JVM flags for the Quarkus app
   PORT                Port for the Quarkus app [default: 8080]
   BENCHMARK_DATASOURCE_URL
@@ -29,7 +28,7 @@ Environment:
 
 Examples:
   $0 21 20s 2,10,25,50
-  BENCHMARK_PROFILE=tuned $0 25 30s 5,20,50
+  BENCHMARK_LANE=linux-container $0 25 30s 5,20,50
 EOF
 }
 
@@ -41,8 +40,8 @@ fi
 JAVA_VERSION="${1:-21}"
 DURATION="${2:-20s}"
 VUS_LIST="${3:-2,10,25,50}"
-BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_PROFILE="stock"
 BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 APP_JVM_OPTS="${APP_JVM_OPTS:-}"
 
@@ -83,7 +82,6 @@ mkdir -p "${RESULTS_DIR}"
 
 info "Starting concurrency study"
 info "Java version: ${JAVA_VERSION}"
-info "Profile: ${BENCHMARK_PROFILE}"
 info "Lane: ${BENCHMARK_LANE}"
 info "Duration: ${DURATION}"
 info "VU ramp: ${VUS_LIST}"

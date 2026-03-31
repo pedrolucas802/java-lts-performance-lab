@@ -1,7 +1,6 @@
 .PHONY: help jmh startup concurrency gc charts clean aggregate full-lab
 
 JAVA_VERSION ?= 21
-PROFILE ?= stock
 LANE ?=
 INCLUDE_MIXED ?= false
 
@@ -18,7 +17,6 @@ help:
 	@echo ""
 	@echo "Variables:"
 	@echo "  JAVA_VERSION=21"
-	@echo "  PROFILE=stock"
 	@echo "  LANE=macos-container|linux-container"
 	@echo "  INCLUDE_MIXED=true|false"
 
@@ -26,13 +24,13 @@ jmh:
 	bash scripts/runners/run_jmh_suite.sh $(JAVA_VERSION)
 
 startup:
-	BENCHMARK_PROFILE=$(PROFILE) bash scripts/runners/run_quarkus_startup_benchmark.sh $(JAVA_VERSION) 3
+	bash scripts/runners/run_quarkus_startup_benchmark.sh $(JAVA_VERSION) 3
 
 concurrency:
-	BENCHMARK_PROFILE=$(PROFILE) bash scripts/runners/run_concurrency_study.sh $(JAVA_VERSION) 20s 2,10,25,50
+	bash scripts/runners/run_concurrency_study.sh $(JAVA_VERSION) 20s 2,10,25,50
 
 gc:
-	BENCHMARK_PROFILE=$(PROFILE) bash scripts/runners/run_gc_suite.sh $(JAVA_VERSION) 20s 10
+	bash scripts/runners/run_gc_suite.sh $(JAVA_VERSION) 20s 10
 
 charts:
 	python3 scripts/charts/generate_startup_chart.py
@@ -54,4 +52,4 @@ aggregate:
 	python3 scripts/aggregators/aggregate_jfr_results.py
 
 full-lab:
-	python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile $(PROFILE) $(if $(LANE),--lane $(LANE),) $(if $(filter true,$(INCLUDE_MIXED)),--include-mixed-workload,)
+	python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 $(if $(LANE),--lane $(LANE),) $(if $(filter true,$(INCLUDE_MIXED)),--include-mixed-workload,)

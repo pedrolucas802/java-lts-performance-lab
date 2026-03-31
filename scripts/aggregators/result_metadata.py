@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Iterator
 
 
-PROFILE_NAMES = ("stock", "tuned")
+PROFILE_NAMES = ("stock",)
 DEFAULT_LANE = "host"
 
 
@@ -76,7 +76,7 @@ def scenario_metadata(scenario: str, run_class: str, source_file: Path | None = 
 
     if source_file is not None and scenario.startswith("aggregate"):
       source_parts = set(source_file.parts)
-      if "stock" not in source_parts and "tuned" not in source_parts:
+      if "stock" not in source_parts:
           db_mode = "synthetic"
 
     return {

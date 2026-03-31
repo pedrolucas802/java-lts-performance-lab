@@ -29,8 +29,8 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
 fi
 
 JAVA_VERSION="${1:-21}"
-BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_PROFILE="stock"
 BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 validate_java_version "${JAVA_VERSION}"
 require_command mvn

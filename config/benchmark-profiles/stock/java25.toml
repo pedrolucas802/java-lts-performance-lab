@@ -1,9 +1,0 @@
-profile = "stock"
-description = "Default Java 25 benchmark profile."
-app_jvm_opts = []
-
-[app_env]
-BENCHMARK_DATASOURCE_INITIAL_SIZE = "2"
-BENCHMARK_DATASOURCE_MIN_SIZE = "2"
-BENCHMARK_DATASOURCE_MAX_SIZE = "16"
-BENCHMARK_DATASOURCE_ACQUISITION_TIMEOUT_SECONDS = "2"

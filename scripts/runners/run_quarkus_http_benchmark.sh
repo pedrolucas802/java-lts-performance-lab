@@ -12,8 +12,8 @@ JAVA_VERSION="${1:-21}"
 SCENARIO="${2:-products}"
 DURATION="${3:-20s}"
 VUS="${4:-10}"
-BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-stock}"
 BENCHMARK_LANE="${BENCHMARK_LANE:-host}"
+BENCHMARK_PROFILE="stock"
 BENCHMARK_RESULTS_ROOT="${BENCHMARK_RESULTS_ROOT:-${PROJECT_ROOT}/results/raw/${BENCHMARK_PROFILE}/${BENCHMARK_LANE}}"
 
 # Constants
@@ -48,7 +48,7 @@ Examples:
     $0 21 products 30s 20     # 20 VUs for 30s on products scenario
     $0 17 aggregate 1m 50     # 50 VUs for 1m on aggregate scenario
 
-Requires Quarkus app to be running. Outputs to results/raw/{profile}/{lane}/java{JAVA_VERSION}/quarkus/
+Requires Quarkus app to be running. Outputs to results/raw/stock/{lane}/java{JAVA_VERSION}/quarkus/
 EOF
 }
 
@@ -94,7 +94,6 @@ mkdir -p "${RESULTS_DIR}"
 echo "INFO: Starting HTTP load test"
 echo "INFO: Java version: ${JAVA_VERSION}"
 echo "INFO: Scenario: ${SCENARIO}"
-echo "INFO: Profile: ${BENCHMARK_PROFILE}"
 echo "INFO: Lane: ${BENCHMARK_LANE}"
 echo "INFO: Duration: ${DURATION}"
 echo "INFO: Virtual users: ${VUS}"

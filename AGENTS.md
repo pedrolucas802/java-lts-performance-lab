@@ -38,5 +38,5 @@ Performance benchmarking lab comparing Java 17, 21, 25 LTS releases using Quarku
 ## Common Patterns
 - **Bash scripts**: Start with `#!/usr/bin/env bash; set -euo pipefail`; include usage(), input validation, dependency checks (require_command), root detection (`SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`), clear output paths, success/failure messages
 - **Python scripts**: main() entrypoint, constants at top (RESULTS_ROOT, OUTPUT_DIR), robust missing-file handling (check if dirs/files exist), consistent output names (e.g., startup-summary.csv), predictable CSV columns (java_version, scenario, metric), no duplicated parsing logic
-- **Naming**: Runners like run_quarkus_suite.sh, aggregators like aggregate_all_results.py, charts like generate_quarkus_charts.py
+- **Naming**: Runners like run_quarkus_suite.sh, aggregators like aggregate_quarkus_results.py, charts like generate_quarkus_charts.py
 - **Integration**: Maven for builds, k6 for HTTP tests, Python for data processing; scripts share common.sh for utilities

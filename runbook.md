@@ -21,19 +21,16 @@ export BENCHMARK_DATASOURCE_USERNAME=benchmark
 export BENCHMARK_DATASOURCE_PASSWORD=benchmark
 
 # 3. Run the full benchmark lab on the local container lane (primary path)
-python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile stock --lane macos-container
+python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --lane macos-container
 
 # 4. Optional higher-confidence Linux lane
-python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile stock --lane linux-container
+python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --lane linux-container
 
 # 5. Optional observability run
-python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --profile stock --lane macos-container --with-observability-suite
+python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --lane macos-container --with-observability-suite
 
 # 6. Optional mixed-workload run
-python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --profile stock --lane macos-container --include-mixed-workload
-
-# 7. Deferred M6 tuning study
-python3 scripts/runners/run_full_benchmark_lab.py --versions 17 21 25 --profile tuned --lane macos-container
+python3 scripts/runners/run_full_benchmark_lab.py --versions 21 --lane macos-container --include-mixed-workload
 
 # Confidence Levels
 Use these labels when interpreting results:
@@ -48,32 +45,32 @@ Use these labels when interpreting results:
 bash scripts/runners/run_jmh_suite.sh 21
 
 # 2. Run startup benchmark only
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_startup_benchmark.sh 21 3
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_startup_benchmark.sh 21 3
 
 # 3. Start Quarkus app for manual HTTP smoke tests
 mvn -pl quarkus-app clean package -DskipTests -Djava.release=21
 java -jar quarkus-app/target/quarkus-app/quarkus-run.jar
 
 # 4. Run HTTP scenarios directly
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 products 10s 10
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 products-db 10s 10
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 transform 10s 10
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 aggregate-platform 10s 10
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 aggregate-virtual 10s 10
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 mixed-workload 10s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 products 10s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 products-db 10s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 transform 10s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 aggregate-platform 10s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 aggregate-virtual 10s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_http_benchmark.sh 21 mixed-workload 10s 10
 
 # 5. Run memory scenarios directly
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 products
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 products-db
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 transform
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 aggregate-platform
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 aggregate-virtual
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 products
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 products-db
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 transform
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 aggregate-platform
+BENCHMARK_LANE=macos-container bash scripts/runners/run_quarkus_memory_benchmark.sh 21 aggregate-virtual
 
 # 6. Run the dedicated concurrency ramp study
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_concurrency_study.sh 21 20s 2,10,25,50
+BENCHMARK_LANE=macos-container bash scripts/runners/run_concurrency_study.sh 21 20s 2,10,25,50
 
 # 7. Run the observability suite directly
-BENCHMARK_PROFILE=stock BENCHMARK_LANE=macos-container bash scripts/runners/run_gc_suite.sh 21 20s 10
+BENCHMARK_LANE=macos-container bash scripts/runners/run_gc_suite.sh 21 20s 10
 
 # 8. Aggregate results
 python3 scripts/aggregators/aggregate_quarkus_results.py
